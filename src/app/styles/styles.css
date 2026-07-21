@@ -2670,6 +2670,78 @@ footer {
     text-decoration: underline dotted;
 }
 
+/* Calamansi Juice 2 addition: Resource Dashboard (ResourcesPanel.tsx). */
+
+.resources-panel {
+    gap: 12px;
+}
+
+.resources-gauge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 10px;
+}
+
+.resources-gauge {
+    border: 1px solid var(--border-4);
+    border-radius: 6px;
+    padding: 8px 10px;
+    background: var(--bg-tertiary);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.resources-gauge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.7rem;
+}
+
+.resources-gauge-label {
+    color: var(--text-secondary);
+}
+
+.resources-gauge-value {
+    font-weight: 600;
+}
+
+.resources-gauge-bar-track {
+    height: 5px;
+    border-radius: 3px;
+    background: var(--bg-alpha-03);
+    overflow: hidden;
+}
+
+.resources-gauge-bar-fill {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.resources-gauge-sub {
+    font-size: 0.62rem;
+    color: var(--text-aaa);
+}
+
+.resources-sparkline {
+    width: 100%;
+    height: 24px;
+    margin-top: 2px;
+}
+
+.resources-service-status {
+    font-size: 0.68rem;
+}
+
+.resources-service-status.running {
+    color: var(--success-color);
+}
+
+.resources-service-status.idle {
+    color: var(--text-aaa);
+}
+
 .backend-row-item {
     padding-top: 2px;
     padding-bottom: 2px;

@@ -96,6 +96,14 @@ export const History: React.FC<IconProps> = ({ size = 24, strokeWidth = 2 }) => 
   </svg>
 );
 
+// Calamansi Juice 2 addition: used by the Resource Dashboard tab
+// (ModelManager.tsx's left-panel rail, ResourcesPanel.tsx).
+export const Activity: React.FC<IconProps> = ({ size = 24, strokeWidth = 2 }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+  </svg>
+);
+
 export const SlidersHorizontal: React.FC<IconProps> = ({ size = 24, strokeWidth = 2 }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
     <path d="M10 5H3" />

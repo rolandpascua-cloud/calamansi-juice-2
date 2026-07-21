@@ -95,6 +95,7 @@ nav:
   - Calamansi Juice 2 Additions:
     - Telemetry History Viewer: calamansi/history.md
     - System State Viewer: calamansi/system-state.md
+    - Resource Dashboard: calamansi/resources.md
   - App Integrations:
     - Overview: integrations/README.md
     - AI Toolkit: integrations/ai-toolkit.md

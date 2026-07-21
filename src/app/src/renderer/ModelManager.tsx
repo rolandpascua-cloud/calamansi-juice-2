@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { Boxes, Brain, ChevronRight, Cpu, Eye, Flame, History as HistoryIcon, Layers, ListOrdered, Settings, SlidersHorizontal, Sparkles, SquareCode, Store, User, Wrench, XIcon } from './components/Icons';
+import { Activity, Boxes, Brain, ChevronRight, Cpu, Eye, Flame, History as HistoryIcon, Layers, ListOrdered, Settings, SlidersHorizontal, Sparkles, SquareCode, Store, User, Wrench, XIcon } from './components/Icons';
 import { ModelInfo, USER_MODEL_PREFIX } from './utils/modelData';
 import { CANONICAL_PREFIXES, getModelDisplayName } from './utils/modelDisplayName';
 import { ToastContainer, useToast } from './Toast';
@@ -19,6 +19,7 @@ import ConnectedBackendRow from './components/ConnectedBackendRow';
 import MarketplacePanel, { MarketplaceCategory } from './MarketplacePanel';
 import HistoryPanel from './HistoryPanel';
 import SystemStatePanel from './SystemStatePanel';
+import ResourcesPanel from './ResourcesPanel';
 import { RECIPE_DISPLAY_NAMES } from './utils/recipeNames';
 import { EjectIcon, PinIcon } from './components/Icons';
 import { getCollectionComponents, isCollectionFullyDownloaded, isCollectionModel, isModelEffectivelyDownloaded, isModelEffectivelyLoaded } from './utils/collectionModels';
@@ -345,7 +346,7 @@ interface ModelJSON {
   image_defaults?: []
 }
 
-export type LeftPanelView = 'models' | 'backends' | 'marketplace' | 'settings' | 'history' | 'system';
+export type LeftPanelView = 'models' | 'backends' | 'marketplace' | 'settings' | 'history' | 'system' | 'resources';
 
 
 const ModelManager: React.FC<ModelManagerProps> = ({ isContentVisible, onContentVisibilityChange, width = 280, currentView, onViewChange }) => {
@@ -1460,7 +1461,9 @@ const [searchQuery, setSearchQuery] = useState('');
           ? 'History'
           : currentView === 'system'
             ? 'System'
-            : 'Settings';
+            : currentView === 'resources'
+              ? 'Resources'
+              : 'Settings';
 
   const searchPlaceholder = currentView === 'models'
     ? 'Search models...'
@@ -1472,7 +1475,9 @@ const [searchQuery, setSearchQuery] = useState('');
           ? 'Filter history...'
           : currentView === 'system'
             ? 'System state'
-            : 'Filter settings...';
+            : currentView === 'resources'
+              ? 'Live resources'
+              : 'Filter settings...';
   const showInlineFilterButton = currentView === 'models' || currentView === 'marketplace';
 
   const getModelStatus = (modelName: string) => {
@@ -1893,6 +1898,9 @@ const [searchQuery, setSearchQuery] = useState('');
           <button className={`left-panel-mode-btn ${currentView === 'system' && isContentVisible ? 'active' : ''}`} onClick={() => handleRailClick('system')} title="System" aria-label="System">
             <Cpu size={14} strokeWidth={1.9} />
           </button>
+          <button className={`left-panel-mode-btn ${currentView === 'resources' && isContentVisible ? 'active' : ''}`} onClick={() => handleRailClick('resources')} title="Resources" aria-label="Resources">
+            <Activity size={14} strokeWidth={1.9} />
+          </button>
           <div className="left-panel-mode-rail-spacer" />
           <button className={`left-panel-mode-btn ${currentView === 'settings' && isContentVisible ? 'active' : ''}`} onClick={() => handleRailClick('settings')} title="Settings" aria-label="Settings">
             <Settings size={14} strokeWidth={1.9} />
@@ -2166,6 +2174,7 @@ const [searchQuery, setSearchQuery] = useState('');
             )}
             {currentView === 'history' && <HistoryPanel searchQuery={searchQuery} />}
             {currentView === 'system' && <SystemStatePanel searchQuery={searchQuery} />}
+            {currentView === 'resources' && <ResourcesPanel searchQuery={searchQuery} />}
             {currentView === 'settings' && <SettingsPanel isVisible={true} searchQuery={searchQuery} />}
           </div>
 

@@ -464,8 +464,7 @@ On top of everything upstream Lemonade v11.0.0 provides, this fork adds a few ex
 
 - **History** — a persistent, queryable log of past requests (model, tokens, latency, tokens/sec, backend, device, success/error), with a GUI tab showing a sortable/filterable table and charts. Survives server restarts (SQLite-backed, stored alongside `config.json`). Full prompt/response text is **never stored by default** — only opt-in via `telemetry.history.store_previews` in `config.json`, truncated per `telemetry.history.preview_max_chars`. See [docs/calamansi/history.md](docs/calamansi/history.md) for the API reference and config keys.
 - **System** — a point-in-time "what am I running on, and what's installed" inspector: hardware, OS/kernel, firmware, and the AI software stack (ROCm/HIP/Mesa/backend versions), each section independently degrading to a labeled "unavailable" reason (missing tool, needs root, not applicable on this platform) rather than erroring. Refreshed on tab open + an explicit button only, cached ~60s server-side. Includes "Copy as text" / "Export JSON" for bug reports. See [docs/calamansi/system-state.md](docs/calamansi/system-state.md).
-
-A live Resources dashboard is planned as a separate follow-up addition — this section will grow as it lands.
+- **Resources** — a live-updating resource monitor (CPU/memory/GPU/NPU/disk/sensors, polled ~2s, plus detection of other local inference services like LM Studio/llama-server/vLLM/FastFlowLM running alongside this app, polled ~4-5s), modeled on the [amd-ai-max-dashboard](https://github.com/rolandpascua-cloud/amd-ai-max-dashboard) project's architecture. No hardcoded ports — a service's port is discovered via runtime socket introspection, not guessed. Polling pauses automatically when the tab isn't open or the window is backgrounded. See [docs/calamansi/resources.md](docs/calamansi/resources.md).
 
 ## FAQ
 

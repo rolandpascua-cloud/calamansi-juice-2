@@ -3,7 +3,7 @@
 !!! note "Calamansi Juice 2 addition"
     This page documents a fork-only addition on top of upstream Lemonade v11.0.0. See [MERGING.md](https://github.com/rolandpascua-cloud/calamansi-juice-2/blob/main/MERGING.md) for how fork-specific docs like this one are tracked against future `git merge upstream/main` operations.
 
-The System State Viewer is a point-in-time "what am I running on, and what's installed" inspector — hardware, OS/kernel, firmware, and the AI software stack. It's distinct from the live-updating Resource Dashboard (a separate, not-yet-landed Calamansi Juice 2 addition): this is a snapshot refreshed on demand, not a polled dashboard.
+The System State Viewer is a point-in-time "what am I running on, and what's installed" inspector — hardware, OS/kernel, firmware, and the AI software stack. It's distinct from the live-updating [Resource Dashboard](resources.md): this is a snapshot refreshed on demand, not a polled dashboard.
 
 ## API
 

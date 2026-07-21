@@ -23,6 +23,7 @@
 #include "telemetry.h"
 #include "telemetry_history_store.h"
 #include "lemon/system_state.h"
+#include "lemon/resource_dashboard.h"
 #include "lemon/system_info.h"
 #include "lemon/version.h"
 #include <cctype>
@@ -916,6 +917,17 @@ void Server::setup_routes(httplib::Server &web_server) {
     // above.
     register_get("system/state", [this](const httplib::Request& req, httplib::Response& res) {
         handle_system_state(req, res);
+    });
+
+    // Resource Dashboard (Calamansi Juice 2 addition) - live-updating,
+    // meant to be polled: /resources/system every ~2s (CPU/memory/GPU/NPU/
+    // disk/sensors), /resources/inference every ~4-5s (shells out more, to
+    // detect other local inference services running alongside this app).
+    register_get("resources/system", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_resources_system(req, res);
+    });
+    register_get("resources/inference", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_resources_inference(req, res);
     });
 
 
@@ -5292,6 +5304,36 @@ void Server::handle_system_state(const httplib::Request& req, httplib::Response&
         res.set_content(snapshot.dump(), "application/json");
     } catch (const std::exception& e) {
         LOG(ERROR, "Server") << "ERROR in handle_system_state: " << e.what() << std::endl;
+        res.status = 500;
+        nlohmann::json error = {{"error", e.what()}};
+        res.set_content(error.dump(), "application/json");
+    }
+}
+
+void Server::handle_resources_system(const httplib::Request& req, httplib::Response& res) {
+    if (req.method == "HEAD") {
+        res.status = 200;
+        return;
+    }
+    try {
+        res.set_content(get_resources_system().dump(), "application/json");
+    } catch (const std::exception& e) {
+        LOG(ERROR, "Server") << "ERROR in handle_resources_system: " << e.what() << std::endl;
+        res.status = 500;
+        nlohmann::json error = {{"error", e.what()}};
+        res.set_content(error.dump(), "application/json");
+    }
+}
+
+void Server::handle_resources_inference(const httplib::Request& req, httplib::Response& res) {
+    if (req.method == "HEAD") {
+        res.status = 200;
+        return;
+    }
+    try {
+        res.set_content(get_resources_inference().dump(), "application/json");
+    } catch (const std::exception& e) {
+        LOG(ERROR, "Server") << "ERROR in handle_resources_inference: " << e.what() << std::endl;
         res.status = 500;
         nlohmann::json error = {{"error", e.what()}};
         res.set_content(error.dump(), "application/json");

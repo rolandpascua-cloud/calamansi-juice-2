@@ -173,6 +173,11 @@ private:
     // system_state.h and docs/calamansi/system-state.md).
     void handle_system_state(const httplib::Request& req, httplib::Response& res);
 
+    // Resource Dashboard endpoints (Calamansi Juice 2 addition — see
+    // resource_dashboard.h and docs/calamansi/resources.md).
+    void handle_resources_system(const httplib::Request& req, httplib::Response& res);
+    void handle_resources_inference(const httplib::Request& req, httplib::Response& res);
+
     // Backend management endpoint handlers
     void handle_install(const httplib::Request& req, httplib::Response& res);
     void handle_install_dry_run(const httplib::Request& req, httplib::Response& res);
