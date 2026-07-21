@@ -44,6 +44,24 @@ These are the files this Part 1 commit touched. On an upstream merge, prefer thi
 - `NOTICE` — new file, upstream attribution
 - `MERGING.md` — this file
 
+### Feature additions (net-new files/endpoints, not upstream renames)
+
+Unlike the rename surface above, these are wholesale new files/features this fork adds on top of upstream — there's nothing upstream to conflict with directly, but a `git merge upstream/main` could still touch the *hook points* they extend (e.g. if upstream changes `telemetry.cpp`'s span pub/sub or `server.cpp`'s route registration). Treat conflicts in these shared hook points the same as "ours" above (keep this fork's addition, re-apply on top of upstream's new code); the net-new files themselves (`telemetry_history_store.*`, `HistoryPanel.tsx`, etc.) will never conflict since upstream has no equivalent.
+
+**Feature 1 — Telemetry History Viewer** (persistent SQLite-backed request history, GET `/telemetry/history` + `/telemetry/history/summary`, POST `/internal/telemetry/history/clear`, GUI "History" tab):
+
+- `src/cpp/server/telemetry_history_store.h` / `.cpp` — new, net-new feature
+- `src/cpp/server/telemetry.h` / `.cpp` — extended `register_span_listener`/`unregister_span_listener` to return/take a handle instead of a single global callback (multiple independent subscribers can now coexist safely — this was a latent bug even before this feature: any listener's `unregister_span_listener()` used to clear every other subscriber's registration too); added `g_current_route_decision` thread-local
+- `src/cpp/include/lemon/websocket_server.h`, `src/cpp/server/websocket_server.cpp` — updated to the handle-based listener API above
+- `src/cpp/include/lemon/server.h`, `src/cpp/server/server.cpp` — new endpoint registrations, `telemetry_history_store_` member, `build_history_access_scope()` (three-tier admin/own-token/own-session scoping, with an open-server carve-out — see `docs/calamansi/history.md`'s Authentication section), `g_current_route_decision` wiring in `handle_chat_completions`
+- `src/cpp/include/lemon/runtime_config.h`, `src/cpp/server/runtime_config.cpp`, `src/cpp/resources/defaults.json` — new `telemetry.history.*` config keys
+- `CMakeLists.txt` — vendored sqlite3 (FetchContent, amalgamation build)
+- `src/app/src/renderer/HistoryPanel.tsx` — new GUI panel
+- `src/app/src/renderer/ModelManager.tsx`, `src/app/src/renderer/components/Icons.tsx`, `src/app/src/renderer/utils/appSettings.ts` — `'history'` added to `LeftPanelView`, rail button, persisted-layout-settings union type
+- `src/app/styles/styles.css` — `.history-panel-*` rules
+- `test/server_telemetry_history.py` — new test file
+- `docs/calamansi/history.md`, `mkdocs.yml` (nav entry), `README.md` (new "Calamansi Juice 2 Additions" section)
+
 ## "Theirs" surface (take upstream wholesale on conflict)
 
 Everything else, including but not limited to:
@@ -98,3 +116,5 @@ Old-name aliases and their stderr deprecation warnings exist purely for backward
 - **README.md** was given a title/fork-notice/intro pass only; the bulk of the document (Getting Started links, Supported Platforms badges, Maintainers/Code-Signing/License-Attribution sections, marketplace app icons) still points at real `lemonade-sdk/lemonade` / `lemonade-server.ai` infrastructure intentionally, since this fork has no parallel infrastructure yet and breaking those links/credits would be worse than leaving them.
 - **Systemd data paths** (`StateDirectory=lemonade`, `RuntimeDirectory=lemonade`, `WorkingDirectory=%S/lemonade`, `EnvironmentFile=-/etc/lemonade/conf.d/*.conf`, `/etc/lemonade/conf.d` install destination) were deliberately left as `lemonade` rather than renamed to `calamansi`, to avoid an operational data-migration concern (existing installs' state/config directories) that's out of scope for a branding-only pass. Revisit if/when this fork diverges further from upstream's install layout.
 - **Deep-link URL scheme** (`lemonade://`, `MimeType=x-scheme-handler/lemonade`, `plugins.deep-link.desktop.schemes` in `tauri.conf.json`) and the **UDP discovery-beacon protocol's `"service":"lemonade"` field** (`src/app/src-tauri/src/beacon.rs`, `src/cpp/server/utils/network_beacon.cpp`) were intentionally left unchanged — these are protocol/config identifiers, not branding strings, and changing them would be a breaking wire-format/URL-handler change outside this pass's scope.
+- **`route_decision` on history records is best-effort**: it's only populated for `chat.completions` requests that go through a router-collection (`x_lemonade_route`) rewrite; direct model requests and the other 4 instrumented routes (completions, embeddings, reranking, responses) leave it `null`. This mirrors the fact that route decisions are a chat-completions-specific concept upstream, not a gap in the history store itself.
+- **Web app parity untested end-to-end**: `HistoryPanel.tsx` lives in the shared renderer source (`src/app/src/renderer/`), so it ships in both the Tauri desktop app and the browser-only web app (`src/web-app`) from a single build, same as every other panel — but this was only verified via `tsc --noEmit` and a `webpack` build in this sandbox (no Rust/Cargo toolchain available to build/run the actual Tauri app end-to-end).

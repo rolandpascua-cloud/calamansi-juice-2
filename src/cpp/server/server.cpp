@@ -21,6 +21,7 @@
 #include "lemon/prometheus_metrics.h"
 #include "lemon/runtime_config.h"
 #include "telemetry.h"
+#include "telemetry_history_store.h"
 #include "lemon/system_info.h"
 #include "lemon/version.h"
 #include <cctype>
@@ -427,6 +428,12 @@ Server::Server(std::shared_ptr<RuntimeConfig> config, const std::string& cache_d
         config_->host(),
         config_->websocket_port());
 
+    // Calamansi Juice 2 addition: persistent telemetry history store, same
+    // <cache_dir> as config.json. Constructed unconditionally; it only
+    // registers as a telemetry span listener internally when
+    // telemetry.history.enabled is true (see TelemetryHistoryStore's ctor).
+    telemetry_history_store_ = std::make_unique<TelemetryHistoryStore>(cache_dir_);
+
     start_model_cache_warmup();
 }
 
@@ -571,6 +578,12 @@ void Server::log_request(const httplib::Request& req) {
 httplib::Server::HandlerResponse Server::authenticate_request(const httplib::Request& req, httplib::Response& res) {
     telemetry::g_request_start_time = std::chrono::steady_clock::now();
     telemetry::g_current_auth_token = "";
+    // Reset per-request; only handle_chat_completions sets this (for
+    // router-collection/x_lemonade_route requests) before ever handing off to
+    // Router::chat_completion(). Resetting here (not just at the set site)
+    // guarantees a thread-pool worker never leaks a stale value from a
+    // previous, unrelated request into this one's span.
+    telemetry::g_current_route_decision.clear();
     if (req.has_header("X-Client-Session-Id")) {
         telemetry::g_current_client_session_id = req.get_header_value("X-Client-Session-Id");
     } else {
@@ -885,6 +898,17 @@ void Server::setup_routes(httplib::Server &web_server) {
         handle_log_level(req, res);
     });
 
+    // Telemetry history endpoints (Calamansi Juice 2 addition). Regular API
+    // routes, same auth tier as /stats etc — the three-tier admin/own-token/
+    // own-session scoping happens inside the handlers, not via a separate
+    // gate here.
+    register_get("telemetry/history", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_telemetry_history(req, res);
+    });
+    register_get("telemetry/history/summary", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_telemetry_history_summary(req, res);
+    });
+
 
     // NOTE: /api/v1/halt endpoint removed - use SIGTERM signal instead (like Python server)
     // The stop command now sends termination signal directly to the process
@@ -898,6 +922,12 @@ void Server::setup_routes(httplib::Server &web_server) {
         lemon::telemetry::flush();
         res.status = 200;
         res.set_content(nlohmann::json{{"status", "flushed"}}.dump(), "application/json");
+    });
+
+    // Admin-gated "Clear History" action for the GUI's History tab, same
+    // pattern as /internal/telemetry/flush above.
+    web_server.Post("/internal/telemetry/history/clear", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_telemetry_history_clear(req, res);
     });
 
     web_server.Post("/internal/pin", [this](const httplib::Request& req, httplib::Response& res) {
@@ -2443,6 +2473,15 @@ void Server::handle_chat_completions(const httplib::Request& req, httplib::Respo
                                                 << "' -> '" << route_dispatch->selected_model << "'" << std::endl;
                             request_json["model"] = route_dispatch->selected_model;
                             request_json.erase("route_trace");
+                            // Surface the routing decision on the span that Router::chat_completion()
+                            // is about to create below, via the same thread-local mechanism
+                            // InferenceSpan already uses for auth token/session id (telemetry.cpp).
+                            // Not threaded through request_json: that field is later dump()'d
+                            // verbatim as the outbound backend request body, so anything put
+                            // there would leak to the backend unless explicitly stripped again.
+                            telemetry::g_current_route_decision =
+                                route_dispatch->decision.matched_rule.empty()
+                                    ? "default" : route_dispatch->decision.matched_rule;
                         }
                     }
                 }
@@ -5069,6 +5108,164 @@ void Server::handle_stats(const httplib::Request& req, httplib::Response& res) {
         res.set_content(stats.dump(), "application/json");
     } catch (const std::exception& e) {
         LOG(ERROR, "Server") << "ERROR in handle_stats: " << e.what() << std::endl;
+        res.status = 500;
+        nlohmann::json error = {{"error", e.what()}};
+        res.set_content(error.dump(), "application/json");
+    }
+}
+
+namespace {
+// Three-tier access scope for the telemetry history endpoints, mirroring
+// WebSocketServer::broadcast_span()'s admin/own-token/own-session rules:
+// admin token sees everything, a token matching a row's stored
+// auth_token_hash sees only its own requests, and an unauthenticated/guest
+// caller is scoped to its X-Client-Session-Id (telemetry::g_current_*
+// thread-locals are set once per request in Server::authenticate_request).
+//
+// One deliberate deviation from the WS server: when api_key is empty,
+// authenticate_request() itself requires no authentication at all for
+// regular /api routes (see its "Authentication hierarchy" comment) - there is
+// no access boundary in that deployment mode. The WS guest/session-id
+// isolation rule exists to scope *anonymous connections on a server that
+// otherwise enforces auth* (spans/stream's deliberate anonymous carve-out);
+// it doesn't apply here, where "no api_key configured" means the operator
+// chose an open, single-tenant server. Falling through to the session-id
+// branch in that mode would hide every request from the GUI's own History
+// tab, since the frontend never sends X-Client-Session-Id on plain REST
+// calls (only the WS clients do) - so an open server would show an
+// always-empty history despite having no real access boundary to enforce.
+lemon::HistoryAccessScope build_history_access_scope(const std::string& api_key,
+                                                       const std::string& admin_api_key) {
+    lemon::HistoryAccessScope scope;
+    if (api_key.empty()) {
+        scope.is_admin = true;
+        return scope;
+    }
+    scope.is_admin = !admin_api_key.empty() && (telemetry::g_current_auth_token == admin_api_key);
+    if (!scope.is_admin) {
+        std::string hash = telemetry::hash_token(telemetry::g_current_auth_token);
+        if (!hash.empty()) {
+            scope.auth_token_hash = hash;
+        } else {
+            scope.client_session_id = telemetry::g_current_client_session_id;
+        }
+    }
+    return scope;
+}
+} // namespace
+
+void Server::handle_telemetry_history(const httplib::Request& req, httplib::Response& res) {
+    if (req.method == "HEAD") {
+        res.status = 200;
+        return;
+    }
+
+    try {
+        if (!telemetry_history_store_ || !telemetry_history_store_->is_available()) {
+            nlohmann::json empty = {{"records", nlohmann::json::array()}, {"total", 0}, {"limit", 0}, {"offset", 0}};
+            res.set_content(empty.dump(), "application/json");
+            return;
+        }
+
+        HistoryQueryFilters filters;
+        if (req.has_param("since")) {
+            try { filters.since_ms = std::stoll(req.get_param_value("since")); } catch (...) {}
+        }
+        if (req.has_param("until")) {
+            try { filters.until_ms = std::stoll(req.get_param_value("until")); } catch (...) {}
+        }
+        if (req.has_param("model") && !req.get_param_value("model").empty()) {
+            filters.model = req.get_param_value("model");
+        }
+        if (req.has_param("route") && !req.get_param_value("route").empty()) {
+            filters.route = req.get_param_value("route");
+        }
+        if (req.has_param("backend") && !req.get_param_value("backend").empty()) {
+            filters.backend = req.get_param_value("backend");
+        }
+
+        int limit = 50;
+        if (req.has_param("limit")) {
+            try { limit = std::stoi(req.get_param_value("limit")); } catch (...) {}
+        }
+        filters.limit = std::clamp(limit, 1, 500);
+
+        int offset = 0;
+        if (req.has_param("offset")) {
+            try { offset = std::stoi(req.get_param_value("offset")); } catch (...) {}
+        }
+        filters.offset = (std::max)(0, offset);
+
+        auto scope = build_history_access_scope(api_key_, admin_api_key_);
+        auto result = telemetry_history_store_->query(filters, scope);
+
+        nlohmann::json records = nlohmann::json::array();
+        for (const auto& rec : result.records) {
+            records.push_back(rec.to_json());
+        }
+
+        nlohmann::json response = {
+            {"records", records},
+            {"total", result.total},
+            {"limit", filters.limit},
+            {"offset", filters.offset},
+        };
+        res.set_content(response.dump(), "application/json");
+    } catch (const std::exception& e) {
+        LOG(ERROR, "Server") << "ERROR in handle_telemetry_history: " << e.what() << std::endl;
+        res.status = 500;
+        nlohmann::json error = {{"error", e.what()}};
+        res.set_content(error.dump(), "application/json");
+    }
+}
+
+void Server::handle_telemetry_history_summary(const httplib::Request& req, httplib::Response& res) {
+    if (req.method == "HEAD") {
+        res.status = 200;
+        return;
+    }
+
+    try {
+        if (!telemetry_history_store_ || !telemetry_history_store_->is_available()) {
+            nlohmann::json empty = {
+                {"avg_tokens_per_second_by_model", nlohmann::json::array()},
+                {"requests_by_day", nlohmann::json::array()},
+                {"overall", {{"total_requests", 0}, {"total_errors", 0}, {"error_rate", 0.0}}},
+            };
+            res.set_content(empty.dump(), "application/json");
+            return;
+        }
+
+        std::optional<int64_t> since_ms;
+        std::optional<int64_t> until_ms;
+        if (req.has_param("since")) {
+            try { since_ms = std::stoll(req.get_param_value("since")); } catch (...) {}
+        }
+        if (req.has_param("until")) {
+            try { until_ms = std::stoll(req.get_param_value("until")); } catch (...) {}
+        }
+
+        auto scope = build_history_access_scope(api_key_, admin_api_key_);
+        nlohmann::json response = telemetry_history_store_->summary(since_ms, until_ms, scope);
+        res.set_content(response.dump(), "application/json");
+    } catch (const std::exception& e) {
+        LOG(ERROR, "Server") << "ERROR in handle_telemetry_history_summary: " << e.what() << std::endl;
+        res.status = 500;
+        nlohmann::json error = {{"error", e.what()}};
+        res.set_content(error.dump(), "application/json");
+    }
+}
+
+void Server::handle_telemetry_history_clear(const httplib::Request& req, httplib::Response& res) {
+    // Admin-gated by authenticate_request (this is an /internal/* route) —
+    // no additional check needed here, same as handle_shutdown.
+    try {
+        if (telemetry_history_store_) {
+            telemetry_history_store_->clear();
+        }
+        res.set_content(nlohmann::json{{"cleared", true}}.dump(), "application/json");
+    } catch (const std::exception& e) {
+        LOG(ERROR, "Server") << "ERROR in handle_telemetry_history_clear: " << e.what() << std::endl;
         res.status = 500;
         nlohmann::json error = {{"error", e.what()}};
         res.set_content(error.dump(), "application/json");

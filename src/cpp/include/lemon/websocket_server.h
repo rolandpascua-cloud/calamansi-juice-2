@@ -136,6 +136,14 @@ private:
     std::unordered_map<std::string, std::string> receive_buffers_;
     std::mutex connections_mutex_;
     bool telemetry_listener_registered_{false};
+    // telemetry::SpanListenerHandle (== std::size_t) returned by
+    // telemetry::register_span_listener(); stored as the underlying type so this
+    // header does not need to pull in telemetry.h (which lives outside
+    // include/lemon and is only reachable via same-directory quoted includes
+    // from src/cpp/server/*.cpp). Passed back to unregister_span_listener() so
+    // this server's disconnect does not clear other subscribers (e.g. the
+    // telemetry history store) — see telemetry.h's SpanListenerHandle docs.
+    std::size_t telemetry_listener_handle_{0};
 
     // Handle new WebSocket connection
     void handle_connection(const std::string& connection_id, struct lws* wsi);

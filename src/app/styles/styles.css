@@ -2422,6 +2422,188 @@ footer {
     background: var(--btn-primary--hover);
 }
 
+/* Calamansi Juice 2 addition: Telemetry History Viewer (HistoryPanel.tsx). */
+
+.history-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 14px 14px;
+}
+
+.history-panel-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.history-panel-view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border-4);
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.history-panel-view-btn {
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    border: none;
+    cursor: pointer;
+}
+
+.history-panel-view-btn.active {
+    background: var(--btn-primary);
+    color: var(--text-primary);
+}
+
+.history-panel-filters {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.history-panel-filters select {
+    font-size: 0.68rem;
+    padding: 4px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border-4);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+}
+
+.history-panel-clear-btn {
+    margin-left: auto;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    border-radius: 4px;
+    border: 1px solid var(--error-border);
+    background: var(--error-background-color);
+    color: var(--error-color);
+    cursor: pointer;
+}
+
+.history-panel-clear-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.history-panel-note {
+    font-size: 0.65rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-4);
+    border-radius: 5px;
+    padding: 6px 10px;
+}
+
+.history-panel-note code {
+    font-size: 0.63rem;
+    background: var(--bg-alpha-03);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.history-panel-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-4);
+    border-radius: 6px;
+}
+
+.history-panel-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.68rem;
+}
+
+.history-panel-table th {
+    text-align: left;
+    padding: 6px 10px;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    cursor: pointer;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+}
+
+.history-panel-table td {
+    padding: 6px 10px;
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-4);
+    white-space: nowrap;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-panel-row-error td {
+    background: var(--error-background-color);
+}
+
+.history-panel-status-ok {
+    color: var(--success-color);
+}
+
+.history-panel-status-error {
+    color: var(--error-color);
+}
+
+.history-panel-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+}
+
+.history-panel-pagination button {
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-4);
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.history-panel-pagination button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.history-panel-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.history-panel-chart-card {
+    border: 1px solid var(--border-4);
+    border-radius: 6px;
+    padding: 10px 12px;
+    background: var(--bg-tertiary);
+}
+
+.history-panel-chart-title {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.history-panel-chart-svg {
+    width: 100%;
+    height: 120px;
+}
+
+.history-panel-chart-empty {
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+}
+
 .backend-row-item {
     padding-top: 2px;
     padding-bottom: 2px;

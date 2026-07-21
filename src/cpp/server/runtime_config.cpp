@@ -395,6 +395,26 @@ double RuntimeConfig::telemetry_otlp_batch_timeout_s() const {
     return get_double_opt(nullptr, {"telemetry", "otlp", "batch_timeout_s"}, 1.0);
 }
 
+bool RuntimeConfig::telemetry_history_enabled() const {
+    return get_bool_opt(nullptr, {"telemetry", "history", "enabled"}, true);
+}
+
+bool RuntimeConfig::telemetry_history_store_previews() const {
+    return get_bool_opt(nullptr, {"telemetry", "history", "store_previews"}, false);
+}
+
+int RuntimeConfig::telemetry_history_preview_max_chars() const {
+    return get_int_opt(nullptr, {"telemetry", "history", "preview_max_chars"}, 200);
+}
+
+int RuntimeConfig::telemetry_history_max_rows() const {
+    return get_int_opt(nullptr, {"telemetry", "history", "max_rows"}, 10000);
+}
+
+int RuntimeConfig::telemetry_history_max_age_days() const {
+    return get_int_opt(nullptr, {"telemetry", "history", "max_age_days"}, 30);
+}
+
 json RuntimeConfig::backend_config(const std::string& backend_name) const {
     std::shared_lock lock(mutex_);
     if (config_.contains(backend_name) && config_[backend_name].is_object()) {
@@ -602,7 +622,7 @@ void RuntimeConfig::validate(const std::string& key, const json& value) const {
             throw std::invalid_argument("'telemetry' must be an object");
         }
         static const std::unordered_set<std::string> valid_telemetry_keys = {
-            "enabled", "hide_inputs", "hide_outputs", "hide_thinking", "max_queue_capacity", "max_attribute_length", "otlp"
+            "enabled", "hide_inputs", "hide_outputs", "hide_thinking", "max_queue_capacity", "max_attribute_length", "otlp", "history"
         };
         for (auto& [t_key, t_val] : value.items()) {
             if (valid_telemetry_keys.find(t_key) == valid_telemetry_keys.end()) {
@@ -712,6 +732,50 @@ void RuntimeConfig::validate(const std::string& key, const json& value) const {
                 double to_val = otlp["batch_timeout_s"].get<double>();
                 if (to_val <= 0.0) {
                     throw std::invalid_argument("'telemetry.otlp.batch_timeout_s' must be positive");
+                }
+            }
+        }
+        if (value.contains("history")) {
+            const auto& history = value["history"];
+            if (!history.is_object()) {
+                throw std::invalid_argument("'telemetry.history' must be an object");
+            }
+            static const std::unordered_set<std::string> valid_history_keys = {
+                "enabled", "store_previews", "preview_max_chars", "max_rows", "max_age_days"
+            };
+            for (auto& [history_key, history_val] : history.items()) {
+                if (valid_history_keys.find(history_key) == valid_history_keys.end()) {
+                    throw std::invalid_argument("Unknown config key: 'telemetry.history." + history_key + "'");
+                }
+            }
+            if (history.contains("enabled") && !history["enabled"].is_boolean()) {
+                throw std::invalid_argument("'telemetry.history.enabled' must be a boolean");
+            }
+            if (history.contains("store_previews") && !history["store_previews"].is_boolean()) {
+                throw std::invalid_argument("'telemetry.history.store_previews' must be a boolean");
+            }
+            if (history.contains("preview_max_chars")) {
+                if (!history["preview_max_chars"].is_number_integer()) {
+                    throw std::invalid_argument("'telemetry.history.preview_max_chars' must be an integer");
+                }
+                if (history["preview_max_chars"].get<int>() < 0) {
+                    throw std::invalid_argument("'telemetry.history.preview_max_chars' must be >= 0");
+                }
+            }
+            if (history.contains("max_rows")) {
+                if (!history["max_rows"].is_number_integer()) {
+                    throw std::invalid_argument("'telemetry.history.max_rows' must be an integer");
+                }
+                if (history["max_rows"].get<int>() <= 0) {
+                    throw std::invalid_argument("'telemetry.history.max_rows' must be > 0");
+                }
+            }
+            if (history.contains("max_age_days")) {
+                if (!history["max_age_days"].is_number_integer()) {
+                    throw std::invalid_argument("'telemetry.history.max_age_days' must be an integer");
+                }
+                if (history["max_age_days"].get<int>() <= 0) {
+                    throw std::invalid_argument("'telemetry.history.max_age_days' must be > 0");
                 }
             }
         }

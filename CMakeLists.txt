@@ -430,6 +430,37 @@ if(NOT USE_SYSTEM_LWS)
     message(STATUS "libwebsockets will be fetched (v${MIN_LWS_VERSION})")
 endif()
 
+# === sqlite3 (Calamansi Juice 2 addition: vendored amalgamation for the
+# telemetry history store, src/cpp/server/telemetry_history_store.cpp) ===
+# The sqlite.org amalgamation ships pre-generated sqlite3.c/sqlite3.h (public
+# domain, single translation unit) — no build step of its own, so
+# FetchContent_Populate + a hand-rolled add_library is enough; there is no
+# CMakeLists.txt in the archive for FetchContent_MakeAvailable to drive. This
+# always vendors (no USE_SYSTEM_SQLITE3 switch) so the Docker UID-10001 image
+# and any other minimal base image build unchanged, with no system package
+# requirement.
+include(FetchContent)
+FetchContent_Declare(sqlite3
+    URL https://www.sqlite.org/2024/sqlite-amalgamation-3450100.zip
+    URL_HASH SHA256=5592243caf28b2cdef41e6ab58d25d653dfc53deded8450eb66072c929f030c4
+)
+FetchContent_GetProperties(sqlite3)
+if(NOT sqlite3_POPULATED)
+    FetchContent_Populate(sqlite3)
+endif()
+add_library(sqlite3 STATIC ${sqlite3_SOURCE_DIR}/sqlite3.c)
+target_include_directories(sqlite3 PUBLIC ${sqlite3_SOURCE_DIR})
+target_compile_definitions(sqlite3 PUBLIC
+    SQLITE_THREADSAFE=1
+    SQLITE_DEFAULT_MEMSTATUS=0
+    SQLITE_OMIT_LOAD_EXTENSION
+    SQLITE_OMIT_DEPRECATED
+)
+if(UNIX)
+    find_package(Threads REQUIRED)
+    target_link_libraries(sqlite3 PUBLIC Threads::Threads ${CMAKE_DL_LIBS})
+endif()
+
 # Use brotli for compression on macOS
 if(APPLE)
     set(HTTPLIB_REQUIRE_BROTLI OFF CACHE INTERNAL "")           # Skip brotli checks
@@ -651,6 +682,7 @@ set(SOURCES_CORE
     src/cpp/server/route_decision_response.cpp
     src/cpp/server/runtime_config.cpp
     src/cpp/server/telemetry.cpp
+    src/cpp/server/telemetry_history_store.cpp
     src/cpp/server/logging_config.cpp
     src/cpp/server/log_stream.cpp
     src/cpp/server/prometheus_metrics.cpp
@@ -814,6 +846,7 @@ endif()
 # ============================================================
 
 target_link_libraries(lemonade-server-core PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(lemonade-server-core PRIVATE sqlite3)
 
 if(USE_SYSTEM_HTTPLIB)
     target_link_libraries(lemonade-server-core PUBLIC lemonade-httplib)

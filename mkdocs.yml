@@ -92,6 +92,8 @@ nav:
     - Lemonade Omni Models: dev/lemonade-omni.md
     - Infrastructure: dev/self-hosted-runners.md
     - Release Process: dev/release.md
+  - Calamansi Juice 2 Additions:
+    - Telemetry History Viewer: calamansi/history.md
   - App Integrations:
     - Overview: integrations/README.md
     - AI Toolkit: integrations/ai-toolkit.md

@@ -60,8 +60,14 @@ void end_llm_span_async(
     const std::string& text_output);
 
 using SpanListenerCallback = std::function<void(const nlohmann::json&)>;
-void register_span_listener(SpanListenerCallback callback);
-void unregister_span_listener();
+// Opaque handle returned by register_span_listener(); pass it to
+// unregister_span_listener() to remove *only* that listener. Multiple
+// independent subscribers (WebSocket spans stream, telemetry history store,
+// ...) can be registered concurrently — a listener must never be able to
+// clear another subscriber's registration.
+using SpanListenerHandle = std::size_t;
+SpanListenerHandle register_span_listener(SpanListenerCallback callback);
+void unregister_span_listener(SpanListenerHandle handle);
 bool has_span_listeners();
 void emit_span(const nlohmann::json& span_details);
 std::string hash_token(const std::string& token);
@@ -69,5 +75,13 @@ std::string hash_token(const std::string& token);
 extern thread_local std::string g_current_auth_token;
 extern thread_local std::chrono::steady_clock::time_point g_request_start_time;
 extern thread_local std::string g_current_client_session_id;
+// Set by Server::handle_chat_completions when a router-collection (x_lemonade_route)
+// model rewrites the request to a selected candidate, before calling into
+// Router::chat_completion(). InferenceSpan's constructor picks this up (mirroring
+// g_current_auth_token/g_current_client_session_id) and records it as the
+// "lemon.route_decision" span attribute. Reset to empty per-request in
+// Server::authenticate_request so a thread-pool worker never leaks a stale
+// value into an unrelated later request.
+extern thread_local std::string g_current_route_decision;
 
 } // namespace lemon::telemetry

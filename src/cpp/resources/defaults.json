@@ -79,6 +79,13 @@
     "hide_outputs": false,
     "hide_thinking": false,
     "max_queue_capacity": 1000,
+    "history": {
+      "enabled": true,
+      "max_age_days": 30,
+      "max_rows": 10000,
+      "preview_max_chars": 200,
+      "store_previews": false
+    },
     "otlp": {
       "batch_timeout_s": 1.0,
       "endpoint": "http://localhost:4318/v1/traces",

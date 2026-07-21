@@ -31,8 +31,15 @@
 
 namespace lemon {
 
-// Forward declaration
+// Forward declarations
 class SystemMetricsPlatform;
+// Calamansi Juice 2 addition: src/cpp/server/telemetry_history_store.h.
+// Forward-declared (not included) because it lives outside include/lemon and
+// is only reachable via a same-directory quoted include from
+// src/cpp/server/*.cpp — see websocket_server.h's telemetry_listener_handle_
+// comment for the same constraint. unique_ptr<TelemetryHistoryStore> only
+// needs the complete type where it's constructed/destroyed, both in server.cpp.
+class TelemetryHistoryStore;
 
 struct RouterDispatchResult {
     std::string requested_model;
@@ -155,6 +162,12 @@ private:
     void handle_log_level(const httplib::Request& req, httplib::Response& res);
     void handle_shutdown(const httplib::Request& req, httplib::Response& res);
     void handle_simulate_vram_pressure(const httplib::Request& req, httplib::Response& res);
+
+    // Telemetry history endpoints (Calamansi Juice 2 addition — see
+    // telemetry_history_store.h and docs/calamansi/history.md).
+    void handle_telemetry_history(const httplib::Request& req, httplib::Response& res);
+    void handle_telemetry_history_summary(const httplib::Request& req, httplib::Response& res);
+    void handle_telemetry_history_clear(const httplib::Request& req, httplib::Response& res);
 
     // Backend management endpoint handlers
     void handle_install(const httplib::Request& req, httplib::Response& res);
@@ -306,6 +319,12 @@ private:
     std::unique_ptr<BackendManager> backend_manager_;
     std::unique_ptr<CloudProviderRegistry> cloud_registry_;
     std::unique_ptr<WebSocketServer> websocket_server_;
+    // Calamansi Juice 2 addition: persistent request history store. Owned
+    // alongside websocket_server_ for the process lifetime; constructed
+    // unconditionally (so the DB and pruning thread exist regardless of
+    // config) but only registers as a telemetry span listener when
+    // telemetry.history.enabled is true — see TelemetryHistoryStore's ctor.
+    std::unique_ptr<TelemetryHistoryStore> telemetry_history_store_;
 
     std::mutex downloads_mutex_;
     std::map<std::string, std::shared_ptr<DownloadJob>> download_jobs_;

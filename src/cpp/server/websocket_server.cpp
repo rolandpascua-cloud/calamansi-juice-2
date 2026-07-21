@@ -247,11 +247,16 @@ void WebSocketServer::stop() {
         return;
     }
 
+    std::size_t handle_to_unregister = 0;
     {
         std::lock_guard<std::mutex> lock(connections_mutex_);
         telemetry_listener_registered_ = false;
+        handle_to_unregister = telemetry_listener_handle_;
+        telemetry_listener_handle_ = 0;
     }
-    telemetry::unregister_span_listener();
+    if (handle_to_unregister != 0) {
+        telemetry::unregister_span_listener(handle_to_unregister);
+    }
 
     running_.store(false);
 
@@ -853,11 +858,21 @@ void WebSocketServer::update_telemetry_listener_registration() {
     }
 
     if (should_register) {
-        telemetry::register_span_listener([this](const json& span) {
+        std::size_t handle = telemetry::register_span_listener([this](const json& span) {
             this->broadcast_span(span);
         });
+        std::lock_guard<std::mutex> lock(connections_mutex_);
+        telemetry_listener_handle_ = handle;
     } else if (should_unregister) {
-        telemetry::unregister_span_listener();
+        std::size_t handle_to_unregister = 0;
+        {
+            std::lock_guard<std::mutex> lock(connections_mutex_);
+            handle_to_unregister = telemetry_listener_handle_;
+            telemetry_listener_handle_ = 0;
+        }
+        if (handle_to_unregister != 0) {
+            telemetry::unregister_span_listener(handle_to_unregister);
+        }
     }
 }
 

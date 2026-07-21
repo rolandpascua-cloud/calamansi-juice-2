@@ -458,6 +458,14 @@ print(completion.choices[0].message.content)
 
 Click to learn more about the [available APIs](./docs/api/README.md) and how to [embed Lemonade](./docs/embeddable/README.md) in your own application.
 
+## Calamansi Juice 2 Additions
+
+On top of everything upstream Lemonade v11.0.0 provides, this fork adds a few extra GUI panels + REST endpoints. See [MERGING.md](MERGING.md) for the full "ours vs theirs" file list this section maps to.
+
+- **History** — a persistent, queryable log of past requests (model, tokens, latency, tokens/sec, backend, device, success/error), with a GUI tab showing a sortable/filterable table and charts. Survives server restarts (SQLite-backed, stored alongside `config.json`). Full prompt/response text is **never stored by default** — only opt-in via `telemetry.history.store_previews` in `config.json`, truncated per `telemetry.history.preview_max_chars`. See [docs/calamansi/history.md](docs/calamansi/history.md) for the API reference and config keys.
+
+More panels (a point-in-time System State inspector, a live Resources dashboard) are planned as separate follow-up additions — this section will grow as they land.
+
 ## FAQ
 
 To read our frequently asked questions, see our [FAQ Guide](./docs/guide/faq.md)

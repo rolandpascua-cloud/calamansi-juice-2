@@ -52,6 +52,14 @@ public:
     int telemetry_otlp_send_batch_size() const;
     double telemetry_otlp_batch_timeout_s() const;
 
+    // Telemetry history settings (Calamansi Juice 2 addition — persistent
+    // SQLite-backed request history, independent of the OTLP pipeline above).
+    bool telemetry_history_enabled() const;
+    bool telemetry_history_store_previews() const;
+    int telemetry_history_preview_max_chars() const;
+    int telemetry_history_max_rows() const;
+    int telemetry_history_max_age_days() const;
+
 
     // Feature flags
     bool offline() const;

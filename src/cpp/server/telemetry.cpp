@@ -4,6 +4,7 @@
 #include "lemon/utils/aixlog.hpp"
 #include "lemon/utils/http_client.h"
 #include "lemon/version.h"
+#include <algorithm>
 #include <cctype>
 #include <condition_variable>
 #include <cstdlib>
@@ -874,6 +875,9 @@ InferenceSpan::InferenceSpan(const std::string& span_kind, const std::string& na
     if (!g_current_client_session_id.empty()) {
         set_attribute("lemon.client_session_id", g_current_client_session_id);
     }
+    if (!g_current_route_decision.empty()) {
+        set_attribute("lemon.route_decision", g_current_route_decision);
+    }
 }
 
 InferenceSpan::~InferenceSpan() {
@@ -1244,17 +1248,29 @@ void end_llm_span_async(
 
 namespace {
     std::mutex g_listeners_mutex;
-    std::vector<SpanListenerCallback> g_span_listeners;
+    // Keyed by handle rather than a flat vector so unregister_span_listener()
+    // can remove exactly one subscriber. Multiple independent consumers (the
+    // WebSocket /spans/stream broadcaster, the SQLite telemetry history store)
+    // register concurrently; previously this was a single shared vector that
+    // ANY unregister call cleared entirely, which meant one subscriber's
+    // disconnect silently killed every other subscriber's feed too.
+    std::vector<std::pair<SpanListenerHandle, SpanListenerCallback>> g_span_listeners;
+    SpanListenerHandle g_next_listener_handle = 1;
 } // namespace
 
-void register_span_listener(SpanListenerCallback callback) {
+SpanListenerHandle register_span_listener(SpanListenerCallback callback) {
     std::lock_guard<std::mutex> lock(g_listeners_mutex);
-    g_span_listeners.push_back(std::move(callback));
+    SpanListenerHandle handle = g_next_listener_handle++;
+    g_span_listeners.emplace_back(handle, std::move(callback));
+    return handle;
 }
 
-void unregister_span_listener() {
+void unregister_span_listener(SpanListenerHandle handle) {
     std::lock_guard<std::mutex> lock(g_listeners_mutex);
-    g_span_listeners.clear();
+    g_span_listeners.erase(
+        std::remove_if(g_span_listeners.begin(), g_span_listeners.end(),
+                       [handle](const auto& entry) { return entry.first == handle; }),
+        g_span_listeners.end());
 }
 
 bool has_span_listeners() {
@@ -1266,7 +1282,10 @@ void emit_span(const nlohmann::json& span_details) {
     std::vector<SpanListenerCallback> active_listeners;
     {
         std::lock_guard<std::mutex> lock(g_listeners_mutex);
-        active_listeners = g_span_listeners;
+        active_listeners.reserve(g_span_listeners.size());
+        for (const auto& entry : g_span_listeners) {
+            active_listeners.push_back(entry.second);
+        }
     }
     for (auto& cb : active_listeners) {
         try {
@@ -1328,5 +1347,6 @@ std::string hash_token(const std::string& token) {
 thread_local std::string g_current_auth_token;
 thread_local std::chrono::steady_clock::time_point g_request_start_time;
 thread_local std::string g_current_client_session_id;
+thread_local std::string g_current_route_decision;
 
 } // namespace lemon::telemetry
