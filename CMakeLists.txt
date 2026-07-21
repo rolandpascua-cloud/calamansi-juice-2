@@ -40,8 +40,8 @@ endif()
 include(GNUInstallDirs)
      # Install man pages
      install(FILES
-          ${CMAKE_SOURCE_DIR}/docs/man/man1/lemond.1
-          ${CMAKE_SOURCE_DIR}/docs/man/man1/lemonade.1
+          ${CMAKE_SOURCE_DIR}/docs/man/man1/calamansid.1
+          ${CMAKE_SOURCE_DIR}/docs/man/man1/calamansi.1
           DESTINATION ${CMAKE_INSTALL_MANDIR}/man1
      )
 
