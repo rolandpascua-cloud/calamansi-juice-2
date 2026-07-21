@@ -1,6 +1,8 @@
-//! macOS-only helper that ensures the `lemonade-tray` process is running
-//! when the desktop app launches. On Windows and Linux the tray is started
-//! by system autostart so there's nothing to do.
+//! macOS-only helper that ensures the `calamansi-tray` process is running
+//! (formerly `lemonade-tray`; see src/cpp/tray/CMakeLists.txt and
+//! MERGING.md for the rebrand rename) when the desktop app launches. On
+//! Windows and Linux the tray is started by system autostart so there's
+//! nothing to do.
 
 #[cfg(target_os = "macos")]
 mod imp {
@@ -10,11 +12,11 @@ mod imp {
     use std::thread;
     use std::time::{Duration, Instant};
 
-    const BINARY_PATH: &str = "/usr/local/bin/lemonade-tray";
+    const BINARY_PATH: &str = "/usr/local/bin/calamansi-tray";
     const KILL_TIMEOUT_SECS: u64 = 30;
 
     fn lock_file_path() -> std::path::PathBuf {
-        env::temp_dir().join("lemonade_Tray.lock")
+        env::temp_dir().join("calamansi_Tray.lock")
     }
 
     fn graceful_kill_tray() {
@@ -23,8 +25,8 @@ mod imp {
         // matches, which we treat as "already clean". Match by exact process
         // name (-x) rather than full command line (-f) to avoid false positives
         // from editors, log paths, or debuggers whose argv happens to contain
-        // the string "lemonade-tray".
-        match Command::new("pkill").args(["-x", "lemonade-tray"]).status() {
+        // the string "calamansi-tray".
+        match Command::new("pkill").args(["-x", "calamansi-tray"]).status() {
             Ok(status) if status.success() => {}
             _ => return,
         }
@@ -32,7 +34,7 @@ mod imp {
         let deadline = Instant::now() + Duration::from_secs(KILL_TIMEOUT_SECS);
         while Instant::now() < deadline {
             let still_alive = Command::new("pgrep")
-                .args(["-x", "lemonade-tray"])
+                .args(["-x", "calamansi-tray"])
                 .status()
                 .map(|s| s.success())
                 .unwrap_or(false);
@@ -42,7 +44,7 @@ mod imp {
             thread::sleep(Duration::from_secs(1));
         }
         let _ = Command::new("pkill")
-            .args(["-9", "-x", "lemonade-tray"])
+            .args(["-9", "-x", "calamansi-tray"])
             .status();
     }
 

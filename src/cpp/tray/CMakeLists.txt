@@ -2,10 +2,12 @@
 # Note: This is included from parent CMakeLists.txt via add_subdirectory(tray)
 # Parent project already sets C++ standard and fetches dependencies
 #
-# Targets:
-#   Windows: LemonadeServer.exe (SUBSYSTEM:WINDOWS, embeds server via lemonade-server-core)
-#   macOS:   lemonade-tray (lightweight tray client, connects to running router)
-#   Linux:   lemonade-tray (lightweight tray client, when AppIndicator3 found)
+# Targets (renamed from lemonade-sdk/lemonade as part of the Calamansi Juice 2
+# rebrand; old names survive as build/install-time aliases, see
+# src/cpp/include/lemon/deprecated_alias.h and MERGING.md):
+#   Windows: CalamansiServer.exe (formerly LemonadeServer.exe; SUBSYSTEM:WINDOWS, embeds server via lemonade-server-core)
+#   macOS:   calamansi-tray (formerly lemonade-tray; lightweight tray client, connects to running router)
+#   Linux:   calamansi-tray (formerly lemonade-tray; lightweight tray client, when AppIndicator3 found)
 
 # ============================================================
 # Platform-specific tray sources and dependencies
@@ -170,105 +172,134 @@ function(apply_tray_deps target_name)
 endfunction()
 
 # ============================================================
-# Windows: LemonadeServer.exe (SUBSYSTEM:WINDOWS, embedded server)
+# Windows: CalamansiServer.exe (SUBSYSTEM:WINDOWS, embedded server)
 # ============================================================
 if(WIN32)
-    add_executable(LemonadeServer WIN32
+    add_executable(CalamansiServer WIN32
         main.cpp
         ${TRAY_UI_SOURCES}
         ${TRAY_PLATFORM_SOURCES}
     )
 
     # Add version resource
-    target_sources(LemonadeServer PRIVATE version.rc)
+    target_sources(CalamansiServer PRIVATE version.rc)
 
     # Embedded server: link the full server core OBJECT library
-    target_link_libraries(LemonadeServer PRIVATE lemonade-server-core)
+    target_link_libraries(CalamansiServer PRIVATE lemonade-server-core)
 
     # Tray platform libraries
-    target_link_libraries(LemonadeServer PRIVATE ${TRAY_PLATFORM_LIBS})
+    target_link_libraries(CalamansiServer PRIVATE ${TRAY_PLATFORM_LIBS})
 
     # Lightweight tray deps (httplib, json, CLI11)
-    apply_tray_deps(LemonadeServer)
+    apply_tray_deps(CalamansiServer)
 
     # Unicode support
-    target_compile_definitions(LemonadeServer PRIVATE UNICODE _UNICODE)
+    target_compile_definitions(CalamansiServer PRIVATE UNICODE _UNICODE)
 
-    set_target_properties(LemonadeServer PROPERTIES
+    set_target_properties(CalamansiServer PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
         RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug"
         RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
     )
 
-    # Copy resources to LemonadeServer.exe output directory
-    add_custom_command(TARGET LemonadeServer POST_BUILD
+    # Copy resources to CalamansiServer.exe output directory
+    add_custom_command(TARGET CalamansiServer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
             ${CMAKE_BINARY_DIR}/resources
-            $<TARGET_FILE_DIR:LemonadeServer>/resources
-        COMMENT "Copying resources to LemonadeServer output directory"
+            $<TARGET_FILE_DIR:CalamansiServer>/resources
+        COMMENT "Copying resources to CalamansiServer output directory"
     )
-    add_dependencies(LemonadeServer copy_resources)
+    add_dependencies(CalamansiServer copy_resources)
+
+    # Backward-compat alias: also produce a same-directory LemonadeServer.exe
+    # copy next to the real CalamansiServer.exe (Windows symlinks can require
+    # elevated privileges, so use a file copy here rather than a symlink; see
+    # src/cpp/include/lemon/deprecated_alias.h for the runtime warning).
+    add_custom_command(TARGET CalamansiServer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:CalamansiServer>"
+            "$<TARGET_FILE_DIR:CalamansiServer>/LemonadeServer.exe"
+        COMMENT "Creating deprecated alias LemonadeServer.exe -> CalamansiServer.exe"
+    )
 endif()
 
 # ============================================================
-# macOS: lemonade-tray (lightweight tray client)
+# macOS: calamansi-tray (lightweight tray client, formerly lemonade-tray)
 # ============================================================
 if(APPLE)
-    add_executable(lemonade-tray
+    add_executable(calamansi-tray
         main.cpp
         ${TRAY_UI_SOURCES}
         ${TRAY_PLATFORM_SOURCES}
     )
 
-    apply_tray_deps(lemonade-tray)
-    target_link_libraries(lemonade-tray PRIVATE ${TRAY_PLATFORM_LIBS})
+    apply_tray_deps(calamansi-tray)
+    target_link_libraries(calamansi-tray PRIVATE ${TRAY_PLATFORM_LIBS})
 
     # Enable ARC for Objective-C++ files
-    target_compile_options(lemonade-tray PRIVATE -fobjc-arc)
+    target_compile_options(calamansi-tray PRIVATE -fobjc-arc)
 
-    set_target_properties(lemonade-tray PROPERTIES
+    set_target_properties(calamansi-tray PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
+    )
+
+    # Backward-compat alias: also produce a same-directory "lemonade-tray"
+    # symlink next to the real calamansi-tray binary.
+    add_custom_command(TARGET calamansi-tray POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "$<TARGET_FILE_NAME:calamansi-tray>" "lemonade-tray"
+        WORKING_DIRECTORY "$<TARGET_FILE_DIR:calamansi-tray>"
+        COMMENT "Creating deprecated alias lemonade-tray -> calamansi-tray"
     )
 endif()
 
 # ============================================================
-# Linux: lemonade-tray (lightweight tray client, when AppIndicator3 found)
+# Linux: calamansi-tray (lightweight tray client, formerly lemonade-tray, when AppIndicator3 found)
 # ============================================================
 if(UNIX AND NOT APPLE AND _LINUX_TRAY_BUILD)
-    add_executable(lemonade-tray
+    add_executable(calamansi-tray
         main.cpp
         ${TRAY_UI_SOURCES}
         ${TRAY_PLATFORM_SOURCES}
     )
 
-    apply_tray_deps(lemonade-tray)
+    apply_tray_deps(calamansi-tray)
 
     find_package(Threads REQUIRED)
-    target_link_libraries(lemonade-tray PRIVATE
+    target_link_libraries(calamansi-tray PRIVATE
         Threads::Threads
         ${TRAY_PLATFORM_LIBS}
     )
 
-    target_include_directories(lemonade-tray PRIVATE ${TRAY_INCLUDE_DIRS})
-    target_compile_definitions(lemonade-tray PRIVATE ${TRAY_DEFINITIONS})
+    target_include_directories(calamansi-tray PRIVATE ${TRAY_INCLUDE_DIRS})
+    target_compile_definitions(calamansi-tray PRIVATE ${TRAY_DEFINITIONS})
 
-    set_target_properties(lemonade-tray PROPERTIES
+    set_target_properties(calamansi-tray PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
     )
 
-    install(TARGETS lemonade-tray RUNTIME DESTINATION bin)
+    # Backward-compat alias: also produce a same-directory "lemonade-tray"
+    # symlink next to the real calamansi-tray binary.
+    add_custom_command(TARGET calamansi-tray POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "$<TARGET_FILE_NAME:calamansi-tray>" "lemonade-tray"
+        WORKING_DIRECTORY "$<TARGET_FILE_DIR:calamansi-tray>"
+        COMMENT "Creating deprecated alias lemonade-tray -> calamansi-tray"
+    )
 
-    # No autostart desktop entry — Linux users start lemonade-tray manually
+    install(TARGETS calamansi-tray RUNTIME DESTINATION bin)
+
+    # No autostart desktop entry — Linux users start calamansi-tray manually
 
     # Symlink in /usr/bin if not installing to /usr
     if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
         install(CODE "
             file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/bin\")
-            file(RELATIVE_PATH _symlink_target \"/usr/bin\" \"${CMAKE_INSTALL_PREFIX}/bin/lemonade-tray\")
+            file(RELATIVE_PATH _symlink_target \"/usr/bin\" \"${CMAKE_INSTALL_PREFIX}/bin/calamansi-tray\")
             execute_process(
                 COMMAND ${CMAKE_COMMAND} -E create_symlink
                     \"\${_symlink_target}\"
-                    \"\$ENV{DESTDIR}/usr/bin/lemonade-tray\"
+                    \"\$ENV{DESTDIR}/usr/bin/calamansi-tray\"
             )
         ")
     endif()
@@ -278,16 +309,16 @@ endif()
 # macOS Signing (Release builds only)
 # ============================================================
 if(APPLE AND CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "Configuring signing for Tray Application (lemonade-tray)")
+    message(STATUS "Configuring signing for Tray Application (calamansi-tray)")
 
     if(NOT DEFINED SIGNING_IDENTITY OR NOT DEFINED ENTITLEMENTS_PATH)
         message(FATAL_ERROR "Signing variables missing! Ensure add_subdirectory(tray) is called AFTER identities are set in root CMakeLists.txt")
     endif()
 
-    add_custom_command(TARGET lemonade-tray POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "--- Signing lemonade-tray ---"
-        COMMAND codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS_PATH}" --sign "${SIGNING_IDENTITY}" -v $<TARGET_FILE:lemonade-tray>
-        COMMENT "Signing lemonade-tray with Hardened Runtime"
+    add_custom_command(TARGET calamansi-tray POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "--- Signing calamansi-tray ---"
+        COMMAND codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS_PATH}" --sign "${SIGNING_IDENTITY}" -v $<TARGET_FILE:calamansi-tray>
+        COMMENT "Signing calamansi-tray with Hardened Runtime"
         VERBATIM
     )
 endif()
@@ -295,27 +326,27 @@ endif()
 # ============================================================
 # Configuration summary
 # ============================================================
-message(STATUS "=== Lemonade Tray Configuration ===")
+message(STATUS "=== Calamansi Tray Configuration ===")
 message(STATUS "Platform: ${CMAKE_SYSTEM_NAME}")
 if(WIN32)
-    message(STATUS "LemonadeServer.exe (embedded server + tray): YES")
+    message(STATUS "CalamansiServer.exe (embedded server + tray): YES")
 elseif(APPLE)
-    message(STATUS "lemonade-tray (client): YES")
+    message(STATUS "calamansi-tray (client): YES")
 elseif(UNIX)
     if(_LINUX_TRAY_BUILD)
         if(APP_INDICATOR_GLIB_FOUND)
-            message(STATUS "lemonade-tray: ENABLED (ayatana-appindicator-glib, GTK-free)")
+            message(STATUS "calamansi-tray: ENABLED (ayatana-appindicator-glib, GTK-free)")
         else()
-            message(STATUS "lemonade-tray: ENABLED (GTK3 + AppIndicator3)")
+            message(STATUS "calamansi-tray: ENABLED (GTK3 + AppIndicator3)")
         endif()
         if(REQUIRE_LINUX_TRAY AND LIBNOTIFY_FOUND)
             message(STATUS "  Notifications: ENABLED (libnotify)")
         endif()
     else()
         if(REQUIRE_LINUX_TRAY)
-            message(STATUS "lemonade-tray: DISABLED (REQUIRE_LINUX_TRAY=ON but deps not found)")
+            message(STATUS "calamansi-tray: DISABLED (REQUIRE_LINUX_TRAY=ON but deps not found)")
         else()
-            message(STATUS "lemonade-tray: DISABLED (REQUIRE_LINUX_TRAY=OFF)")
+            message(STATUS "calamansi-tray: DISABLED (REQUIRE_LINUX_TRAY=OFF)")
         endif()
     endif()
 endif()

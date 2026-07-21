@@ -1,4 +1,6 @@
-## 🍋 Lemonade: Refreshingly fast local AI
+## 🍊 Calamansi Juice 2: Refreshingly fast local AI
+
+> Calamansi Juice 2 is a white-label fork of [Lemonade](https://github.com/lemonade-sdk/lemonade) v11.0.0. See [MERGING.md](MERGING.md) for the upstream-tracking policy.
 
 <p align="center">
   <a href="https://discord.gg/5xXzkMu8Zk">
@@ -25,12 +27,12 @@
   <a href="https://discord.gg/5xXzkMu8Zk">Discord</a>
 </h3>
 
-Lemonade is the local AI server that gives you the same capabilities as cloud APIs, except 100% free and private. Use the latest models for chat, coding, speech, and image generation on your own NPU and GPU.
+Calamansi Juice 2 is the local AI server that gives you the same capabilities as cloud APIs, except 100% free and private. Use the latest models for chat, coding, speech, and image generation on your own NPU and GPU.
 
-Lemonade comes in two flavors:
+Calamansi Juice 2 comes in two flavors:
 
-* **Lemonade Server** installs a service you can connect to hundreds of great apps using standard OpenAI, Anthropic, and Ollama APIs.
-* **Embeddable Lemonade** is a portable binary you can package into your own application to give it multi-modal local AI that auto-optimizes for your user’s PC.
+* **Calamansi Juice 2 Server** installs a service you can connect to hundreds of great apps using standard OpenAI, Anthropic, and Ollama APIs.
+* **Embeddable Calamansi Juice 2** is a portable binary you can package into your own application to give it multi-modal local AI that auto-optimizes for your user’s PC.
 
 *This project is built by the community for every PC, with optimizations by AMD engineers to get the most from Ryzen AI, Radeon, and Strix Halo PCs.*
 
@@ -411,16 +413,16 @@ lemonade backends
 
 ## Project Roadmap
 
-Lemonade's roadmap is defined by a set of working groups. Visit the landing page [here](./docs/dev/working-groups/README.md) to learn each group's goal and roadmap.
+Calamansi Juice 2 tracks the upstream Lemonade project's roadmap, which is defined by a set of working groups. Visit the landing page [here](./docs/dev/working-groups/README.md) to learn each group's goal and roadmap.
 
-## Integrate Embeddable Lemonade in Your Application
+## Integrate Embeddable Calamansi Juice 2 in Your Application
 
-Embeddable Lemonade is a binary version of Lemonade that you can bundle into your own app to give it a portable, auto-optimizing, multi-modal local AI stack. This lets users focus on your app, with zero Lemonade installers, branding, or telemetry.
+Embeddable Calamansi Juice 2 is a binary version of Calamansi Juice 2 that you can bundle into your own app to give it a portable, auto-optimizing, multi-modal local AI stack. This lets users focus on your app, with zero Calamansi Juice 2 installers, branding, or telemetry.
 
-Check out the [Embeddable Lemonade guide](docs/embeddable/README.md).
+Check out the [Embeddable Lemonade guide](docs/embeddable/README.md) (the underlying docs still reference the upstream Lemonade naming; see [MERGING.md](MERGING.md)).
 
 
-## Connect Lemonade Server to Your Application
+## Connect Calamansi Juice 2 Server to Your Application
 
 You can use any OpenAI-compatible client library by configuring it to use `http://localhost:13305/v1` as the base URL. A table containing official and popular OpenAI clients on different languages is shown below.
 
@@ -436,7 +438,7 @@ Feel free to pick and choose your preferred language.
 ```python
 from openai import OpenAI
 
-# Initialize the client to use Lemonade Server
+# Initialize the client to use Calamansi Juice 2 Server
 client = OpenAI(
     base_url="http://localhost:13305/api/v1",
     api_key="lemonade"  # required but unused

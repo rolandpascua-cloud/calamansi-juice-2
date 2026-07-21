@@ -1,24 +1,26 @@
 [Unit]
-Description=Lemonade Server
-Documentation=https://lemonade-server.ai/docs/
+Description=Calamansi Juice 2 Server
+# TODO: point at a real docs site once calamansi-juice-2 has one; this is a
+# placeholder until the fork's own documentation is published.
+Documentation=https://github.com/rolandpascua-cloud/calamansi-juice-2
 After=network-online.target
 
 [Service]
 Type=simple
-User=lemonade
-Group=lemonade
+User=calamansi
+Group=calamansi
 StateDirectory=lemonade
 StateDirectoryMode=0750
 RuntimeDirectory=lemonade
 RuntimeDirectoryMode=0700
 WorkingDirectory=%S/lemonade
 # Server settings (port, host, models_dir, …) live in config.json, not env vars.
-# The env-file drop-in is kept for the few env vars lemond still reads:
+# The env-file drop-in is kept for the few env vars calamansid still reads:
 #   HF_TOKEN                 — HuggingFace authentication token
 #   LEMONADE_API_KEY         — require API-key auth on all routes
 #   LEMONADE_ADMIN_API_KEY   — API-key specific to internal routes
 EnvironmentFile=-/etc/lemonade/conf.d/*.conf
-ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/lemond
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/calamansid
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s

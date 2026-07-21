@@ -1,7 +1,7 @@
 {
-  "name": "lemonade-app",
-  "version": "1.0.0",
-  "description": "Lemonade Desktop App (Tauri)",
+  "name": "calamansi-app",
+  "version": "11.0.0+cj2.0.0",
+  "description": "Calamansi Juice 2 Desktop App (Tauri)",
   "scripts": {
     "dev:renderer": "webpack serve --mode development",
     "build:renderer": "webpack --mode development",

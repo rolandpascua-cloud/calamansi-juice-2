@@ -6,8 +6,9 @@
 # ============================================================
 # Download digest verification dependency
 # ============================================================
-# http_client.cpp is compiled into both lemonade-server-core and the lemonade
-# CLI.  Digest verification must therefore be wired to both targets from here.
+# http_client.cpp is compiled into both lemonade-server-core and the
+# calamansi CLI.  Digest verification must therefore be wired to both targets
+# from here.
 # Prefer a distro-provided mbedcrypto package, but fall back to FetchContent so
 # local Lemonade builds do not require developers to install a new package.
 if(NOT TARGET lemonade-digest-crypto)
@@ -126,85 +127,107 @@ elseif(UNIX)
 endif()
 
 # ============================================================
-# lemonade - HTTP client CLI
+# calamansi - HTTP client CLI (formerly "lemonade")
 # ============================================================
-add_executable(lemonade
+add_executable(calamansi
     ${COMMON_SOURCES}
 )
 
-target_link_libraries(lemonade PRIVATE
+target_link_libraries(calamansi PRIVATE
     nlohmann_json::nlohmann_json
     lemonade-digest-crypto
 )
 
 # Link httplib based on what's available (set by parent CMakeLists.txt)
 if(USE_SYSTEM_HTTPLIB)
-    target_link_libraries(lemonade PRIVATE lemonade-httplib)
+    target_link_libraries(calamansi PRIVATE lemonade-httplib)
 else()
-    target_link_libraries(lemonade PRIVATE httplib::httplib)
+    target_link_libraries(calamansi PRIVATE httplib::httplib)
 endif()
 
 # Link CLI11 based on what's available
 if(USE_SYSTEM_CLI11)
-    target_include_directories(lemonade PRIVATE ${CLI11_INCLUDE_DIRS})
+    target_include_directories(calamansi PRIVATE ${CLI11_INCLUDE_DIRS})
 else()
-    target_link_libraries(lemonade PRIVATE CLI11::CLI11)
+    target_link_libraries(calamansi PRIVATE CLI11::CLI11)
 endif()
 
 # Link curl based on what's available
 if(USE_SYSTEM_CURL)
-    target_link_libraries(lemonade PRIVATE ${CURL_LIBRARIES})
-    target_include_directories(lemonade PRIVATE ${CURL_INCLUDE_DIRS})
-    target_compile_options(lemonade PRIVATE ${CURL_CFLAGS_OTHER})
+    target_link_libraries(calamansi PRIVATE ${CURL_LIBRARIES})
+    target_include_directories(calamansi PRIVATE ${CURL_INCLUDE_DIRS})
+    target_compile_options(calamansi PRIVATE ${CURL_CFLAGS_OTHER})
 else()
-    target_link_libraries(lemonade PRIVATE libcurl)
+    target_link_libraries(calamansi PRIVATE libcurl)
 endif()
 
 # Link zstd based on what's available
 if(USE_SYSTEM_ZSTD)
-    target_link_libraries(lemonade PRIVATE ${ZSTD_LIBRARIES})
-    target_include_directories(lemonade PRIVATE ${ZSTD_INCLUDE_DIRS})
-    target_link_directories(lemonade PRIVATE ${ZSTD_LIBRARY_DIRS})
-    target_compile_options(lemonade PRIVATE ${ZSTD_CFLAGS_OTHER})
+    target_link_libraries(calamansi PRIVATE ${ZSTD_LIBRARIES})
+    target_include_directories(calamansi PRIVATE ${ZSTD_INCLUDE_DIRS})
+    target_link_directories(calamansi PRIVATE ${ZSTD_LIBRARY_DIRS})
+    target_compile_options(calamansi PRIVATE ${ZSTD_CFLAGS_OTHER})
 endif()
 
 # Add include directories for header-only system packages
-target_include_directories(lemonade PRIVATE
+target_include_directories(calamansi PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/../include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
 # Set output directory to build root
-set_target_properties(lemonade PROPERTIES
+set_target_properties(calamansi PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 if(WIN32)
-    set_target_properties(lemonade PROPERTIES
+    set_target_properties(calamansi PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_BINARY_DIR}/Debug"
         RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_BINARY_DIR}/Release"
     )
 endif()
 
-target_compile_definitions(lemonade PRIVATE LEMONADE_CLI)
+target_compile_definitions(calamansi PRIVATE LEMONADE_CLI)
+
+# Backward-compat alias: also produce a same-directory "lemonade"[.exe] next
+# to the real calamansi binary in the build output dir, so anything that
+# still looks for the pre-rebrand CLI filename keeps finding a real, working
+# binary (see also the install-time symlink further down, and
+# src/cpp/include/lemon/deprecated_alias.h for the runtime warning). Windows
+# symlinks can require elevated privileges, so use a file copy there instead.
+if(WIN32)
+    add_custom_command(TARGET calamansi POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:calamansi>"
+            "$<TARGET_FILE_DIR:calamansi>/lemonade.exe"
+        COMMENT "Creating deprecated alias lemonade.exe -> calamansi.exe"
+    )
+else()
+    add_custom_command(TARGET calamansi POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "$<TARGET_FILE_NAME:calamansi>" "lemonade"
+        WORKING_DIRECTORY "$<TARGET_FILE_DIR:calamansi>"
+        COMMENT "Creating deprecated alias lemonade -> calamansi"
+    )
+endif()
 
 # Platform-specific settings
 if(WIN32)
     # On Windows, make sure we have Unicode support
-    target_compile_definitions(lemonade PRIVATE
+    target_compile_definitions(calamansi PRIVATE
         UNICODE
         _UNICODE
     )
 
     # Link with networking and system libraries
-    target_link_libraries(lemonade PRIVATE
+    target_link_libraries(calamansi PRIVATE
         ws2_32
         wsock32
     )
 
     # Embed manifest file if MSVC
     if(MSVC)
-        # Note: lemonade does not use a manifest file
-        set_target_properties(lemonade PROPERTIES
+        # Note: calamansi does not use a manifest file
+        set_target_properties(calamansi PROPERTIES
             LINK_FLAGS "/MANIFEST:EMBED"
         )
     endif()
@@ -212,9 +235,9 @@ endif()
 
 if(APPLE)
     # Enable ARC (Automatic Reference Counting) for macOS Objective-C++ files
-    target_compile_options(lemonade PRIVATE -fobjc-arc)
+    target_compile_options(calamansi PRIVATE -fobjc-arc)
 
-    target_link_libraries(lemonade PRIVATE
+    target_link_libraries(calamansi PRIVATE
         "-framework Foundation"
         "-framework CoreServices"
     )
@@ -223,14 +246,14 @@ endif()
 if(UNIX AND NOT APPLE)
     # On Linux, link with pthread
     find_package(Threads REQUIRED)
-    target_link_libraries(lemonade PRIVATE
+    target_link_libraries(calamansi PRIVATE
         Threads::Threads
     )
 endif()
 
 # Install target (only on non-macOS platforms where main CMakeLists doesn't handle it)
 if(NOT APPLE)
-    install(TARGETS lemonade
+    install(TARGETS calamansi
         RUNTIME DESTINATION bin
     )
 endif()
@@ -239,28 +262,30 @@ endif()
 # macOS Signing (Release builds only)
 # ============================================================
 if(APPLE AND CMAKE_BUILD_TYPE STREQUAL "Release")
-    message(STATUS "Configuring signing for CLI Application (lemonade)")
+    message(STATUS "Configuring signing for CLI Application (calamansi)")
 
     # Inherit variables from Parent CMake
     if(NOT DEFINED SIGNING_IDENTITY OR NOT DEFINED ENTITLEMENTS_PATH)
         message(FATAL_ERROR "Signing variables missing! Ensure add_subdirectory(cli) is called AFTER identities are set in root CMakeLists.txt")
     endif()
 
-    add_custom_command(TARGET lemonade POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "--- Signing lemonade (CLI) ---"
-        COMMAND codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS_PATH}" --sign "${SIGNING_IDENTITY}" -v $<TARGET_FILE:lemonade>
-        COMMENT "Signing lemonade with Hardened Runtime"
+    add_custom_command(TARGET calamansi POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "--- Signing calamansi (CLI) ---"
+        COMMAND codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS_PATH}" --sign "${SIGNING_IDENTITY}" -v $<TARGET_FILE:calamansi>
+        COMMENT "Signing calamansi with Hardened Runtime"
         VERBATIM
     )
 endif()
 
-# Create symlink in standard bin path only if not installing to /usr
+# Create symlink in standard bin path only if not installing to /usr.
+# Old name ("lemonade") -> new binary ("calamansi"), so anything still
+# looking for the pre-rebrand CLI name on PATH keeps working.
 if(UNIX AND NOT APPLE AND NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
     install(CODE "
         file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/bin\")
         execute_process(
             COMMAND ${CMAKE_COMMAND} -E create_symlink
-                ${CMAKE_INSTALL_PREFIX}/bin/lemonade
+                ${CMAKE_INSTALL_PREFIX}/bin/calamansi
                 \"\$ENV{DESTDIR}/usr/bin/lemonade\"
         )
     ")

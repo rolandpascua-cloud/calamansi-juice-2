@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    lemonade_app_lib::run()
+    calamansi_app_lib::run()
 }

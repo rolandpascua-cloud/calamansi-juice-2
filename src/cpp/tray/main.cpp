@@ -2,13 +2,14 @@
 //
 // Windows (SUBSYSTEM:WINDOWS):
 //   Embeds lemon::Server on a background thread, then runs TrayUI.
-//   Output binary: LemonadeServer.exe
+//   Output binary: CalamansiServer.exe (deprecated alias: LemonadeServer.exe)
 //
 // macOS / Linux:
-//   Connects to an already-running lemond, then runs TrayUI.
-//   Output binary: lemonade-tray
+//   Connects to an already-running calamansid, then runs TrayUI.
+//   Output binary: calamansi-tray (deprecated alias: lemonade-tray)
 
 #include "lemon_tray/tray_ui.h"
+#include <lemon/deprecated_alias.h>
 #include <lemon/single_instance.h>
 #include <lemon/utils/aixlog.hpp>
 #include <lemon/version.h>
@@ -102,6 +103,10 @@ static bool wait_for_server(const std::string& host, int port, int timeout_secon
 #ifdef _WIN32
 
 int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
+    // __argv is populated by the MSVC CRT startup code even in a
+    // SUBSYSTEM:WINDOWS binary with no console-style main(argc, argv).
+    lemon::warn_if_deprecated_alias(__argv[0], "CalamansiServer", {"LemonadeServer"});
+
     // Create a job object so that all child processes (llama-server, etc.)
     // are automatically killed when this process exits.
     create_child_process_job();
@@ -185,7 +190,7 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
             lemon::Server server(runtime_config, cache_dir);
             server.run();
         } catch (const std::exception& e) {
-            MessageBoxA(NULL, e.what(), "Lemonade Server Error", MB_OK | MB_ICONERROR);
+            MessageBoxA(NULL, e.what(), "Calamansi Juice 2 Server Error", MB_OK | MB_ICONERROR);
         }
     });
     server_thread.detach();
@@ -193,8 +198,8 @@ int WINAPI wWinMain(HINSTANCE, HINSTANCE, LPWSTR, int) {
     // Wait for server to be ready
     if (!wait_for_server(runtime_config->host(), runtime_config->port(), 15)) {
         MessageBoxA(NULL,
-            "Lemonade Server failed to start within 15 seconds.",
-            "Lemonade Server Error", MB_OK | MB_ICONERROR);
+            "Calamansi Juice 2 Server failed to start within 15 seconds.",
+            "Calamansi Juice 2 Server Error", MB_OK | MB_ICONERROR);
         WSACleanup();
         return 1;
     }
@@ -264,14 +269,16 @@ static void tray_signal_handler(int sig) {
 }
 
 int main(int argc, char* argv[]) {
+    lemon::warn_if_deprecated_alias(argv[0], "calamansi-tray", {"lemonade-tray"});
+
     // Single instance check
     if (lemon::SingleInstance::IsAnotherInstanceRunning("Tray")) {
-        std::cerr << "lemonade-tray is already running." << std::endl;
+        std::cerr << "calamansi-tray is already running." << std::endl;
         return 0;
     }
 
     // Parse args
-    CLI::App app{"Lemonade Tray - system tray interface for Lemonade Server"};
+    CLI::App app{"Calamansi Juice 2 Tray - system tray interface for Calamansi Juice 2 Server"};
     int port = 13305;
     std::string host = "localhost";
 
@@ -289,14 +296,14 @@ int main(int argc, char* argv[]) {
     signal(SIGTERM, tray_signal_handler);
 
     // Wait for router to be reachable (retry with backoff up to 30s)
-    std::cout << "Connecting to lemond at " << host << ":" << port << "..." << std::endl;
+    std::cout << "Connecting to calamansid at " << host << ":" << port << "..." << std::endl;
     if (!wait_for_server(host, port, 30)) {
-        std::cerr << "Error: Could not connect to lemond at " << host << ":" << port << std::endl;
-        std::cerr << "Make sure lemond is running." << std::endl;
+        std::cerr << "Error: Could not connect to calamansid at " << host << ":" << port << std::endl;
+        std::cerr << "Make sure calamansid is running." << std::endl;
         return 1;
     }
 
-    std::cout << "Connected to lemond v" << LEMON_VERSION_STRING << std::endl;
+    std::cout << "Connected to calamansid v" << LEMON_VERSION_STRING << std::endl;
 
     // Create and run tray UI
     lemon_tray::TrayUI tray(port, host);

@@ -1,7 +1,7 @@
 {
-  "name": "lemonade-web",
-  "version": "1.0.0",
-  "description": "Lemonade Web App (Browser-only)",
+  "name": "calamansi-web",
+  "version": "11.0.0+cj2.0.0",
+  "description": "Calamansi Juice 2 Web App (Browser-only)",
   "scripts": {
     "build": "npm run build:renderer:prod",
     "build:renderer:prod": "webpack --mode production"

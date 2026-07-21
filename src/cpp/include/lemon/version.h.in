@@ -5,9 +5,15 @@
 #define LEMON_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
 #define LEMON_VERSION_MINOR @PROJECT_VERSION_MINOR@
 #define LEMON_VERSION_PATCH @PROJECT_VERSION_PATCH@
-#define LEMON_VERSION_STRING "@PROJECT_VERSION@"
+// LEMON_VERSION_STRING is the fork's full user-facing version:
+// "<upstream-version>+cj<fork-version>" (see LEMON_FULL_VERSION_STRING in
+// the root CMakeLists.txt and MERGING.md's "Version scheme" section). Every
+// consumer (CLI --version, server --version, tray) reads this one macro, so
+// the numeric-only @PROJECT_VERSION@ CMake project version stays untouched.
+#define LEMON_VERSION_STRING "@LEMON_FULL_VERSION_STRING@"
 
-// Version as comma-separated values for RC files
+// Version as comma-separated values for RC files (numeric fields only —
+// Windows FILEVERSION/PRODUCTVERSION resources require 4 numeric parts).
 #define LEMON_VERSION_RC @PROJECT_VERSION_MAJOR@,@PROJECT_VERSION_MINOR@,@PROJECT_VERSION_PATCH@,0
 
 // Version as string with .0 suffix for RC files

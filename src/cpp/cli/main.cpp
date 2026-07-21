@@ -5,6 +5,7 @@
 #include "lemon_cli/bench.h"
 #include "lemon_cli/chat_repl.h"
 #include <lemon_cli/agent_config_file.h>
+#include <lemon/deprecated_alias.h>
 #include <lemon/model_types.h>
 #include <lemon/recipe_options.h>
 #include <lemon/version.h>
@@ -1202,8 +1203,10 @@ static int handle_scan_command(const CliConfig& config) {
 }
 
 int main(int argc, char* argv[]) {
+    lemon::warn_if_deprecated_alias(argv[0], "calamansi", {"lemonade"});
+
     // CLI11 configuration
-    CLI::App app{"Lemonade CLI - HTTP client for Lemonade Server"};
+    CLI::App app{"Calamansi Juice 2 CLI - HTTP client for Calamansi Juice 2 Server"};
 
     // Create config object and bind CLI11 options directly to it
     CliConfig config;
@@ -1211,7 +1214,7 @@ int main(int argc, char* argv[]) {
     // Set up CLI11 options with callbacks that write directly to config
     app.set_help_flag("--help,-h", "Display help information");
     app.set_help_all_flag("--help-all", "Display help information for all subcommands");
-    app.set_version_flag("--version,-v", ("lemonade version " LEMON_VERSION_STRING));
+    app.set_version_flag("--version,-v", ("calamansi version " LEMON_VERSION_STRING));
     app.fallthrough(true);
 
     // Global options (available to all subcommands)

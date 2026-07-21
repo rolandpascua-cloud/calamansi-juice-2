@@ -2,8 +2,12 @@
 #include <lemon/utils/path_utils.h>
 #include <lemon/version.h>
 
-#define APP_NAME "lemond"
-#define APP_DESC APP_NAME " - Lightweight LLM server"
+// APP_NAME is the server binary name used in --version output and the CLI11
+// help description. Renamed from "lemond" as part of the Calamansi Juice 2
+// rebrand (see MERGING.md); "lemond" survives only as a deprecated alias
+// binary (see src/cpp/include/lemon/deprecated_alias.h).
+#define APP_NAME "calamansid"
+#define APP_DESC "Calamansi Juice 2 Server - Lightweight LLM server"
 
 namespace lemon {
 

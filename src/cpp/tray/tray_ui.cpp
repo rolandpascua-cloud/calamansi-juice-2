@@ -94,7 +94,7 @@ bool TrayUI::initialize() {
 
     tray_->set_ready_callback([this]() {
         if (!silent_) {
-            show_notification("Woohoo!", "Lemonade Server is running! Right-click the tray icon to access options.");
+            show_notification("Woohoo!", "Calamansi Juice 2 Server is running! Right-click the tray icon to access options.");
         }
     });
 
@@ -108,7 +108,7 @@ bool TrayUI::initialize() {
 
     std::string icon_path = find_icon_path();
 
-    if (!tray_->initialize("Lemonade Server", icon_path)) {
+    if (!tray_->initialize("Calamansi Juice 2 Server", icon_path)) {
         std::cerr << "Error: Failed to initialize tray" << std::endl;
         return false;
     }
@@ -512,7 +512,7 @@ void TrayUI::on_change_port(int new_port) {
     if (!result.empty()) {
         port_ = new_port;
         build_menu();
-        show_notification("Port Changed", "Lemonade Server is now running on port " + std::to_string(new_port));
+        show_notification("Port Changed", "Calamansi Juice 2 Server is now running on port " + std::to_string(new_port));
     }
 }
 
@@ -526,7 +526,7 @@ void TrayUI::on_change_context_size(int new_ctx_size) {
     std::string label = (new_ctx_size >= 1024)
         ? std::to_string(new_ctx_size / 1024) + "K"
         : std::to_string(new_ctx_size);
-    show_notification("Context Size Changed", "Lemonade Server context size is now " + label);
+    show_notification("Context Size Changed", "Calamansi Juice 2 Server context size is now " + label);
 }
 
 void TrayUI::on_change_max_loaded_models(int new_max) {
@@ -538,7 +538,7 @@ void TrayUI::on_change_max_loaded_models(int new_max) {
         build_menu();
         std::string label = (new_max == -1) ? "Unlimited" : std::to_string(new_max);
         show_notification("Max Loaded Models Changed",
-                          "Lemonade Server max loaded models is now " + label);
+                          "Calamansi Juice 2 Server max loaded models is now " + label);
     }
 }
 

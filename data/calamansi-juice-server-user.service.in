@@ -1,13 +1,15 @@
 [Unit]
-Description=Lemonade Server (user)
-Documentation=https://lemonade-server.ai/docs/
+Description=Calamansi Juice 2 Server (user)
+# TODO: point at a real docs site once calamansi-juice-2 has one; this is a
+# placeholder until the fork's own documentation is published.
+Documentation=https://github.com/rolandpascua-cloud/calamansi-juice-2
 After=network-online.target
 
 [Service]
 Type=simple
 WorkingDirectory=%h
 EnvironmentFile=-%E/lemonade/conf.d/*.conf
-ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/lemond
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/calamansid
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s

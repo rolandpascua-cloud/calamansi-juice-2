@@ -5,6 +5,7 @@
 #include <thread>
 #include <lemon/cli_parser.h>
 #include <lemon/config_file.h>
+#include <lemon/deprecated_alias.h>
 #include <lemon/logging_config.h>
 #include <lemon/server.h>
 #include <lemon/system_info.h>
@@ -58,6 +59,7 @@ void signal_handler(int signal) {
 }
 
 int main(int argc, char** argv) {
+    lemon::warn_if_deprecated_alias(argv[0], "calamansid", {"lemond"});
     try {
         CLIParser parser;
         parser.parse(argc, argv);

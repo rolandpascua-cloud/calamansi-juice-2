@@ -1,11 +1,11 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=Lemonade App
+Name=Calamansi Juice 2
 Comment=Local LLMs with GPU and NPU acceleration - Desktop Application
 GenericName=AI Model Manager
-Exec=lemonade-app %u
-Icon=lemonade-app
+Exec=calamansi-app %u
+Icon=calamansi-app
 Terminal=false
 Categories=Development;Utility;
 Keywords=AI;LLM;GPU;NPU;Machine Learning;

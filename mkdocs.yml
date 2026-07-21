@@ -14,14 +14,15 @@
 # To serve locally during authoring:
 #   zensical serve
 
-site_name: Lemonade Server Documentation
+site_name: Calamansi Juice 2 Documentation
 site_url: https://lemonade-server.ai/
-site_description: Lemonade Server is a lightweight, open-source local LLM server that allows you to run and manage multiple AI applications on your local machine. It provides a simple CLI for managing applications and supports various LLMs, making it easy to deploy and use AI models locally.
+site_description: Calamansi Juice 2 is a lightweight, open-source local LLM server that allows you to run and manage multiple AI applications on your local machine. It provides a simple CLI for managing applications and supports various LLMs, making it easy to deploy and use AI models locally.
 
 edit_uri: README.md
 
-repo_name: lemonade-sdk/lemonade
-repo_url: https://github.com/lemonade-sdk/lemonade
+# TODO: placeholder until the real calamansi-juice-2 fork repo exists and is pushed.
+repo_name: rolandpascua-cloud/calamansi-juice-2
+repo_url: https://github.com/rolandpascua-cloud/calamansi-juice-2
 
 plugins:
   - search

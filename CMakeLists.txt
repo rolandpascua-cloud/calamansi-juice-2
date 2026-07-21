@@ -7,6 +7,16 @@ endif()
 
 project(lemon_cpp VERSION 11.0.0)
 
+# Calamansi Juice 2 fork version scheme: "<upstream-version>+cj<fork-version>".
+# PROJECT_VERSION tracks the upstream lemonade-sdk/lemonade release this fork
+# is rebased on (must stay numeric-only — a CMake requirement for
+# project(... VERSION ...)); LEMON_FULL_VERSION_STRING is what actually ships
+# in --version output, man pages, and the tray UI, via version.h.in's
+# LEMON_VERSION_STRING substitution. Bump the "+cj" suffix for fork-only
+# releases; rebase PROJECT_VERSION when pulling a new upstream tag. See
+# MERGING.md for the full policy.
+set(LEMON_FULL_VERSION_STRING "${PROJECT_VERSION}+cj2.0.0")
+
 include(CTest)
 
 # Export compile_commands.json for clangd/IntelliSense
@@ -83,13 +93,13 @@ set(TAURI_APP_CARGO_TARGET "${TAURI_APP_CARGO_DIR}/target/release")
 set(TAURI_APP_BUILD_DIR "${CMAKE_BINARY_DIR}/app")
 if(WIN32)
     set(TAURI_APP_UNPACKED_DIR "${TAURI_APP_BUILD_DIR}")
-    set(TAURI_EXE_NAME "lemonade-app.exe")
+    set(TAURI_EXE_NAME "calamansi-app.exe")
 elseif(APPLE)
     set(TAURI_APP_UNPACKED_DIR "${TAURI_APP_BUILD_DIR}")
-    set(TAURI_EXE_NAME "lemonade-app.app")
+    set(TAURI_EXE_NAME "calamansi-app.app")
 else()
     set(TAURI_APP_UNPACKED_DIR "${TAURI_APP_BUILD_DIR}")
-    set(TAURI_EXE_NAME "lemonade-app")
+    set(TAURI_EXE_NAME "calamansi-app")
 endif()
 
 # ============================================================
@@ -429,10 +439,10 @@ endif()
 
 
 # ============================================================
-# Application: lemond
+# Application: calamansid (server daemon; formerly "lemond")
 # ============================================================
 
-set(EXECUTABLE_NAME "lemond")
+set(EXECUTABLE_NAME "calamansid")
 
 
 # ============================================================
@@ -755,6 +765,28 @@ if(WIN32)
     target_sources(${EXECUTABLE_NAME} PRIVATE src/cpp/server/version.rc)
 endif()
 
+# Backward-compat alias: also produce a same-directory "lemond"[.exe] next to
+# the real ${EXECUTABLE_NAME} binary, so anything that still looks for the
+# pre-rebrand filename in the build output directory keeps finding a real,
+# working binary (see also the install-time symlink further down, and
+# src/cpp/include/lemon/deprecated_alias.h for the runtime warning). Windows
+# symlinks can require elevated privileges, so use a file copy there instead.
+if(WIN32)
+    add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:${EXECUTABLE_NAME}>"
+            "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/lemond.exe"
+        COMMENT "Creating deprecated alias lemond.exe -> ${EXECUTABLE_NAME}.exe"
+    )
+else()
+    add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E create_symlink
+            "$<TARGET_FILE_NAME:${EXECUTABLE_NAME}>" "lemond"
+        WORKING_DIRECTORY "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>"
+        COMMENT "Creating deprecated alias lemond -> ${EXECUTABLE_NAME}"
+    )
+endif()
+
 
 # ============================================================
 # Linking configurations
@@ -859,7 +891,7 @@ elseif(UNIX)
     if(PkgConfig_FOUND)
         pkg_check_modules(SYSTEMD QUIET libsystemd)
         if(SYSTEMD_FOUND)
-            set(LEMONADE_SYSTEMD_UNIT_NAME "lemond.service" CACHE STRING
+            set(LEMONADE_SYSTEMD_UNIT_NAME "calamansi-juice-server.service" CACHE STRING
                 "Systemd unit name to match for journald log mode (overridable at runtime via LEMONADE_SYSTEMD_UNIT env var)")
             target_include_directories(lemonade-server-core PUBLIC ${SYSTEMD_INCLUDE_DIRS})
             target_link_libraries(lemonade-server-core PUBLIC ${SYSTEMD_LIBRARIES})
@@ -999,14 +1031,14 @@ if(NODE_EXECUTABLE AND NPM_EXECUTABLE AND CARGO_EXECUTABLE)
     # `npm exec --` with cmd /c chaining breaks MSBuild's VCEnd label).
     if(APPLE)
         set(TAURI_BUILD_SCRIPT "build:mac")
-        set(TAURI_BUILD_OUTPUT_SOURCE "${TAURI_APP_CARGO_TARGET}/bundle/macos/lemonade-app.app")
-        set(TAURI_COPY_COMMAND ${CMAKE_COMMAND} -E copy_directory "${TAURI_BUILD_OUTPUT_SOURCE}" "${TAURI_APP_UNPACKED_DIR}/lemonade-app.app")
+        set(TAURI_BUILD_OUTPUT_SOURCE "${TAURI_APP_CARGO_TARGET}/bundle/macos/calamansi-app.app")
+        set(TAURI_COPY_COMMAND ${CMAKE_COMMAND} -E copy_directory "${TAURI_BUILD_OUTPUT_SOURCE}" "${TAURI_APP_UNPACKED_DIR}/calamansi-app.app")
     else()
         set(TAURI_BUILD_SCRIPT "build:nobundle")
         if(WIN32)
-            set(TAURI_BUILD_OUTPUT_SOURCE "${TAURI_APP_CARGO_TARGET}/lemonade-app.exe")
+            set(TAURI_BUILD_OUTPUT_SOURCE "${TAURI_APP_CARGO_TARGET}/calamansi-app.exe")
         else()
-            set(TAURI_BUILD_OUTPUT_SOURCE "${TAURI_APP_CARGO_TARGET}/lemonade-app")
+            set(TAURI_BUILD_OUTPUT_SOURCE "${TAURI_APP_CARGO_TARGET}/calamansi-app")
         endif()
         set(TAURI_COPY_COMMAND ${CMAKE_COMMAND} -E copy "${TAURI_BUILD_OUTPUT_SOURCE}" "${TAURI_APP_OUTPUT}")
     endif()
@@ -1149,7 +1181,7 @@ if(CAN_BUILD_WEB_APP AND BUILD_WEB_APP)
 
     if (NOT WIN32 AND NOT APPLE AND NOT BUILD_TAURI_APP)
         # Install .desktop file for web app
-        install(FILES ${CMAKE_SOURCE_DIR}/data/lemonade-web-app.desktop
+        install(FILES ${CMAKE_SOURCE_DIR}/data/calamansi-web-app.desktop
             DESTINATION share/applications
         )
         # Create symlink in standard applications path only if not installing to /usr
@@ -1158,14 +1190,14 @@ if(CAN_BUILD_WEB_APP AND BUILD_WEB_APP)
                 file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/share/applications\")
                 execute_process(
                     COMMAND ${CMAKE_COMMAND} -E create_symlink
-                        ${CMAKE_INSTALL_PREFIX}/share/applications/lemonade-web-app.desktop
-                        \"\$ENV{DESTDIR}/usr/share/applications/lemonade-web-app.desktop\"
+                        ${CMAKE_INSTALL_PREFIX}/share/applications/calamansi-web-app.desktop
+                        \"\$ENV{DESTDIR}/usr/share/applications/calamansi-web-app.desktop\"
                 )
             ")
         endif()
         install(FILES ${CMAKE_SOURCE_DIR}/src/app/assets/logo.svg
             DESTINATION share/pixmaps
-            RENAME lemonade-app.svg
+            RENAME calamansi-app.svg
         )
         # Create symlink in standard pixmaps path only if not installing to /usr
         if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
@@ -1173,8 +1205,8 @@ if(CAN_BUILD_WEB_APP AND BUILD_WEB_APP)
                 file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/share/pixmaps\")
                 execute_process(
                     COMMAND ${CMAKE_COMMAND} -E create_symlink
-                        ${CMAKE_INSTALL_PREFIX}/share/pixmaps/lemonade-app.svg
-                        \"\$ENV{DESTDIR}/usr/share/pixmaps/lemonade-app.svg\"
+                        ${CMAKE_INSTALL_PREFIX}/share/pixmaps/calamansi-app.svg
+                        \"\$ENV{DESTDIR}/usr/share/pixmaps/calamansi-app.svg\"
                 )
             ")
         endif()
@@ -1265,8 +1297,8 @@ if(APPLE)
     endif()
 
     # Configure Plists & Entitlements
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/com.lemonade.server.plist.in ${CMAKE_CURRENT_BINARY_DIR}/com.lemonade.server.plist @ONLY)
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/com.lemonade.tray.plist.in ${CMAKE_CURRENT_BINARY_DIR}/com.lemonade.tray.plist @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/com.calamansi.server.plist.in ${CMAKE_CURRENT_BINARY_DIR}/com.calamansi.server.plist @ONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/com.calamansi.tray.plist.in ${CMAKE_CURRENT_BINARY_DIR}/com.calamansi.tray.plist @ONLY)
 
     set(ENTITLEMENTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/cpp/server/entitlements.plist")
     if(NOT EXISTS "${ENTITLEMENTS_PATH}")
@@ -1295,11 +1327,11 @@ add_subdirectory(src/cpp/cli)
 if(WIN32 AND WIX_EXECUTABLE)
     set(WIX_PACKAGED_TARGETS)
 
-    if(TARGET LemonadeServer)
-        list(APPEND WIX_PACKAGED_TARGETS LemonadeServer)
+    if(TARGET CalamansiServer)
+        list(APPEND WIX_PACKAGED_TARGETS CalamansiServer)
     endif()
-    if(TARGET lemonade)
-        list(APPEND WIX_PACKAGED_TARGETS lemonade)
+    if(TARGET calamansi)
+        list(APPEND WIX_PACKAGED_TARGETS calamansi)
     endif()
     if(TARGET ${EXECUTABLE_NAME})
         list(APPEND WIX_PACKAGED_TARGETS ${EXECUTABLE_NAME})
@@ -1332,7 +1364,7 @@ if(APPLE)
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         message(STATUS "Release Build: Configuring Hardened Runtime Signing for Router")
 
-        # Sign 'lemond'
+        # Sign '${EXECUTABLE_NAME}' (calamansid)
         add_custom_command(TARGET ${EXECUTABLE_NAME} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E echo "--- Signing ${EXECUTABLE_NAME} ---"
             COMMAND codesign --force --options runtime --timestamp --entitlements "${ENTITLEMENTS_PATH}" --sign "${SIGNING_IDENTITY}" -v $<TARGET_FILE:${EXECUTABLE_NAME}>
@@ -1342,10 +1374,10 @@ if(APPLE)
     endif()
 
     # Prepare Tauri App
-    set(TAURI_APP_BUILD_COPY "${CMAKE_BINARY_DIR}/lemonade-app.app")
+    set(TAURI_APP_BUILD_COPY "${CMAKE_BINARY_DIR}/calamansi-app.app")
     add_custom_target(prepare_tauri_app
         COMMAND ${CMAKE_COMMAND} -E remove_directory "${TAURI_APP_BUILD_COPY}"
-        COMMAND cp -R "${TAURI_APP_UNPACKED_DIR}/lemonade-app.app" "${CMAKE_BINARY_DIR}/" || echo "Warning: Could not find lemonade-app.app in ${TAURI_APP_UNPACKED_DIR}"
+        COMMAND cp -R "${TAURI_APP_UNPACKED_DIR}/calamansi-app.app" "${CMAKE_BINARY_DIR}/" || echo "Warning: Could not find calamansi-app.app in ${TAURI_APP_UNPACKED_DIR}"
         COMMENT "Copying Tauri App..."
         DEPENDS tauri-app
     )
@@ -1375,36 +1407,36 @@ if(APPLE)
     endif()
 
     # Tray client -> /usr/local/bin
-    if(TARGET lemonade-tray)
-        install(TARGETS lemonade-tray RUNTIME DESTINATION "bin" COMPONENT Runtime)
+    if(TARGET calamansi-tray)
+        install(TARGETS calamansi-tray RUNTIME DESTINATION "bin" COMPONENT Runtime)
 
         # Sign the tray binary after installation (Release builds only)
         if(CMAKE_BUILD_TYPE STREQUAL "Release")
             install(CODE "
                 execute_process(
-                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/lemonade-tray\"
+                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/calamansi-tray\"
                     RESULT_VARIABLE SIGN_RESULT
                 )
                 if(NOT SIGN_RESULT EQUAL 0)
-                    message(FATAL_ERROR \"Failed to sign lemonade-tray\")
+                    message(FATAL_ERROR \"Failed to sign calamansi-tray\")
                 endif()
             " COMPONENT Runtime)
         endif()
     endif()
 
     # CLI -> /usr/local/bin
-    if(TARGET lemonade)
-        install(TARGETS lemonade RUNTIME DESTINATION "bin" COMPONENT Runtime)
+    if(TARGET calamansi)
+        install(TARGETS calamansi RUNTIME DESTINATION "bin" COMPONENT Runtime)
 
         # Sign the CLI binary after installation (Release builds only)
         if(CMAKE_BUILD_TYPE STREQUAL "Release")
             install(CODE "
                 execute_process(
-                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/lemonade\"
+                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/calamansi\"
                     RESULT_VARIABLE SIGN_RESULT
                 )
                 if(NOT SIGN_RESULT EQUAL 0)
-                    message(FATAL_ERROR \"Failed to sign lemonade\")
+                    message(FATAL_ERROR \"Failed to sign calamansi\")
                 endif()
             " COMPONENT Runtime)
         endif()
@@ -1421,8 +1453,8 @@ if(APPLE)
     )
 
     # Plists -> /Library/...
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/com.lemonade.server.plist" DESTINATION "/Library/LaunchDaemons" COMPONENT Runtime)
-    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/com.lemonade.tray.plist" DESTINATION "/Library/LaunchAgents" COMPONENT Runtime)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/com.calamansi.server.plist" DESTINATION "/Library/LaunchDaemons" COMPONENT Runtime)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/com.calamansi.tray.plist" DESTINATION "/Library/LaunchAgents" COMPONENT Runtime)
 
     # Placeholder -> /usr/local/share/lemonade-server
     file(WRITE "${CMAKE_BINARY_DIR}/.keep" "")
@@ -1548,43 +1580,43 @@ if(UNIX AND NOT APPLE)
 
     # Configure systemd service file (uses CMAKE_INSTALL_FULL_* variables)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/data/lemond.service.in
-        ${CMAKE_BINARY_DIR}/lemond.service
+        ${CMAKE_SOURCE_DIR}/data/calamansi-juice-server.service.in
+        ${CMAKE_BINARY_DIR}/calamansi-juice-server.service
         @ONLY
     )
 
     # Install systemd service file
-    install(FILES ${CMAKE_BINARY_DIR}/lemond.service
+    install(FILES ${CMAKE_BINARY_DIR}/calamansi-juice-server.service
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system
     )
     # Create symlinks in standard systemd search paths only if not installing to /usr
     # (if prefix is /usr, the service is already in the standard location)
     if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
         lemonade_install_systemd_symlink(
-            "/usr/lib/systemd/system/lemond.service"
-            "${CMAKE_INSTALL_PREFIX}/lib/systemd/system/lemond.service"
+            "/usr/lib/systemd/system/calamansi-juice-server.service"
+            "${CMAKE_INSTALL_PREFIX}/lib/systemd/system/calamansi-juice-server.service"
         )
         lemonade_install_systemd_symlink(
-            "/usr/lib/systemd/user/lemond.service"
-            "${CMAKE_INSTALL_PREFIX}/lib/systemd/user/lemond.service"
+            "/usr/lib/systemd/user/calamansi-juice-server.service"
+            "${CMAKE_INSTALL_PREFIX}/lib/systemd/user/calamansi-juice-server.service"
         )
     endif()
 
-    # Install sysusers.d snippet so the 'lemonade' system user is created
-    install(FILES ${CMAKE_SOURCE_DIR}/data/lemonade.sysusers
+    # Install sysusers.d snippet so the 'calamansi' system user is created
+    install(FILES ${CMAKE_SOURCE_DIR}/data/calamansi-juice.sysusers
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/sysusers.d
-        RENAME lemonade.conf
+        RENAME calamansi.conf
     )
 
     # Configure + install the user-mode systemd unit
     configure_file(
-        ${CMAKE_SOURCE_DIR}/data/lemond-user.service.in
-        ${CMAKE_BINARY_DIR}/lemond-user.service
+        ${CMAKE_SOURCE_DIR}/data/calamansi-juice-server-user.service.in
+        ${CMAKE_BINARY_DIR}/calamansi-juice-server-user.service
         @ONLY
     )
-    install(FILES ${CMAKE_BINARY_DIR}/lemond-user.service
+    install(FILES ${CMAKE_BINARY_DIR}/calamansi-juice-server-user.service
         DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/user
-        RENAME lemond.service
+        RENAME calamansi-juice-server.service
     )
 
     # Install secrets.conf for LEMONADE_API_KEY (still loaded via EnvironmentFile)
@@ -1672,7 +1704,7 @@ if(UNIX AND NOT APPLE)
 
         if (NOT WIN32 AND NOT APPLE)
             # Install .desktop file for the Tauri app
-            install(FILES ${CMAKE_SOURCE_DIR}/data/lemonade-app.desktop
+            install(FILES ${CMAKE_SOURCE_DIR}/data/calamansi-app.desktop
                 DESTINATION share/applications
             )
             # Create symlink in standard applications path only if not installing to /usr
@@ -1681,14 +1713,14 @@ if(UNIX AND NOT APPLE)
                     file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/share/applications\")
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} -E create_symlink
-                            ${CMAKE_INSTALL_PREFIX}/share/applications/lemonade-app.desktop
-                            \"\$ENV{DESTDIR}/usr/share/applications/lemonade-app.desktop\"
+                            ${CMAKE_INSTALL_PREFIX}/share/applications/calamansi-app.desktop
+                            \"\$ENV{DESTDIR}/usr/share/applications/calamansi-app.desktop\"
                     )
                 ")
             endif()
             install(FILES ${CMAKE_SOURCE_DIR}/src/app/assets/logo.svg
                 DESTINATION share/pixmaps
-                RENAME lemonade-app.svg
+                RENAME calamansi-app.svg
             )
 
             # Create symlink in standard pixmaps path only if not installing to /usr
@@ -1697,26 +1729,27 @@ if(UNIX AND NOT APPLE)
                     file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/share/pixmaps\")
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} -E create_symlink
-                            ${CMAKE_INSTALL_PREFIX}/share/pixmaps/lemonade-app.svg
-                            \"\$ENV{DESTDIR}/usr/share/pixmaps/lemonade-app.svg\"
+                            ${CMAKE_INSTALL_PREFIX}/share/pixmaps/calamansi-app.svg
+                            \"\$ENV{DESTDIR}/usr/share/pixmaps/calamansi-app.svg\"
                     )
                 ")
             endif()
             # Create symlink in standard bin path only if not installing to /usr
+            # (target filename must match ${TAURI_EXE_NAME} above: calamansi-app)
             if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
                 install(CODE "
                     file(MAKE_DIRECTORY \"\$ENV{DESTDIR}/usr/bin\")
                     execute_process(
                         COMMAND ${CMAKE_COMMAND} -E create_symlink
-                            \"\${CMAKE_INSTALL_PREFIX}/share/lemonade-server/app/lemonade-app\"
-                            \"\$ENV{DESTDIR}/usr/bin/lemonade-app\"
+                            \"\${CMAKE_INSTALL_PREFIX}/share/lemonade-server/app/calamansi-app\"
+                            \"\$ENV{DESTDIR}/usr/bin/calamansi-app\"
                     )
                 ")
             else()
                 install(CODE "
                     file(CREATE_LINK
-                        \"\${CMAKE_INSTALL_PREFIX}/share/lemonade-server/app/lemonade-app\"
-                        \"\${CMAKE_INSTALL_PREFIX}/bin/lemonade-app\"
+                        \"\${CMAKE_INSTALL_PREFIX}/share/lemonade-server/app/calamansi-app\"
+                        \"\${CMAKE_INSTALL_PREFIX}/bin/calamansi-app\"
                         SYMBOLIC)
                 ")
             endif()
@@ -1734,7 +1767,7 @@ endif()
 # ============================================================
 # Embeddable Archive Target (Cross-Platform)
 # ============================================================
-# Builds lemond + lemonade, assembles a portable archive with
+# Builds calamansid + calamansi, assembles a portable archive with
 # binaries, LICENSE, and resource files. Produces .tar.gz on
 # Linux or .zip on Windows.
 #
@@ -1784,36 +1817,36 @@ add_custom_target(embeddable
     COMMAND ${CMAKE_COMMAND} -E make_directory "${EMBEDDABLE_STAGING_DIR}/resources"
 
     # Copy binaries
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:lemond>" "${EMBEDDABLE_STAGING_DIR}/"
-    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:lemonade>" "${EMBEDDABLE_STAGING_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${EXECUTABLE_NAME}>" "${EMBEDDABLE_STAGING_DIR}/"
+    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:calamansi>" "${EMBEDDABLE_STAGING_DIR}/"
 
     # Copy LICENSE
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE" "${EMBEDDABLE_STAGING_DIR}/"
 
     # Copy resource files
     COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:lemond>/resources/server_models.json"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources/server_models.json"
         "${EMBEDDABLE_STAGING_DIR}/resources/"
     COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:lemond>/resources/backend_versions.json"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources/backend_versions.json"
         "${EMBEDDABLE_STAGING_DIR}/resources/"
     COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:lemond>/resources/vllm_model_config.json"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources/vllm_model_config.json"
         "${EMBEDDABLE_STAGING_DIR}/resources/"
     COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:lemond>/resources/defaults.json"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources/defaults.json"
         "${EMBEDDABLE_STAGING_DIR}/resources/"
     COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:lemond>/resources/bench_scenarios.json"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources/bench_scenarios.json"
         "${EMBEDDABLE_STAGING_DIR}/resources/"
     COMMAND ${CMAKE_COMMAND} -E copy
-        "$<TARGET_FILE_DIR:lemond>/resources/toolDefinitions.json"
+        "$<TARGET_FILE_DIR:${EXECUTABLE_NAME}>/resources/toolDefinitions.json"
         "${EMBEDDABLE_STAGING_DIR}/resources/"
 
     # Create archive
     COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}" ${EMBEDDABLE_TAR_CMD}
 
-    DEPENDS lemond lemonade
+    DEPENDS ${EXECUTABLE_NAME} calamansi
     COMMENT "Assembling embeddable archive: ${EMBEDDABLE_ARCHIVE_NAME}"
     VERBATIM
 )
