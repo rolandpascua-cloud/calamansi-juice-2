@@ -18,6 +18,7 @@ import BackendManager from './BackendManager';
 import ConnectedBackendRow from './components/ConnectedBackendRow';
 import MarketplacePanel, { MarketplaceCategory } from './MarketplacePanel';
 import HistoryPanel from './HistoryPanel';
+import SystemStatePanel from './SystemStatePanel';
 import { RECIPE_DISPLAY_NAMES } from './utils/recipeNames';
 import { EjectIcon, PinIcon } from './components/Icons';
 import { getCollectionComponents, isCollectionFullyDownloaded, isCollectionModel, isModelEffectivelyDownloaded, isModelEffectivelyLoaded } from './utils/collectionModels';
@@ -344,7 +345,7 @@ interface ModelJSON {
   image_defaults?: []
 }
 
-export type LeftPanelView = 'models' | 'backends' | 'marketplace' | 'settings' | 'history';
+export type LeftPanelView = 'models' | 'backends' | 'marketplace' | 'settings' | 'history' | 'system';
 
 
 const ModelManager: React.FC<ModelManagerProps> = ({ isContentVisible, onContentVisibilityChange, width = 280, currentView, onViewChange }) => {
@@ -1457,7 +1458,9 @@ const [searchQuery, setSearchQuery] = useState('');
         ? 'Marketplace'
         : currentView === 'history'
           ? 'History'
-          : 'Settings';
+          : currentView === 'system'
+            ? 'System'
+            : 'Settings';
 
   const searchPlaceholder = currentView === 'models'
     ? 'Search models...'
@@ -1467,7 +1470,9 @@ const [searchQuery, setSearchQuery] = useState('');
         ? 'Filter marketplace...'
         : currentView === 'history'
           ? 'Filter history...'
-          : 'Filter settings...';
+          : currentView === 'system'
+            ? 'System state'
+            : 'Filter settings...';
   const showInlineFilterButton = currentView === 'models' || currentView === 'marketplace';
 
   const getModelStatus = (modelName: string) => {
@@ -1885,6 +1890,9 @@ const [searchQuery, setSearchQuery] = useState('');
           <button className={`left-panel-mode-btn ${currentView === 'history' && isContentVisible ? 'active' : ''}`} onClick={() => handleRailClick('history')} title="History" aria-label="History">
             <HistoryIcon size={14} strokeWidth={1.9} />
           </button>
+          <button className={`left-panel-mode-btn ${currentView === 'system' && isContentVisible ? 'active' : ''}`} onClick={() => handleRailClick('system')} title="System" aria-label="System">
+            <Cpu size={14} strokeWidth={1.9} />
+          </button>
           <div className="left-panel-mode-rail-spacer" />
           <button className={`left-panel-mode-btn ${currentView === 'settings' && isContentVisible ? 'active' : ''}`} onClick={() => handleRailClick('settings')} title="Settings" aria-label="Settings">
             <Settings size={14} strokeWidth={1.9} />
@@ -2157,6 +2165,7 @@ const [searchQuery, setSearchQuery] = useState('');
               />
             )}
             {currentView === 'history' && <HistoryPanel searchQuery={searchQuery} />}
+            {currentView === 'system' && <SystemStatePanel searchQuery={searchQuery} />}
             {currentView === 'settings' && <SettingsPanel isVisible={true} searchQuery={searchQuery} />}
           </div>
 

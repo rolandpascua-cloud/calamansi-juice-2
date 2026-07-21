@@ -22,6 +22,7 @@
 #include "lemon/runtime_config.h"
 #include "telemetry.h"
 #include "telemetry_history_store.h"
+#include "lemon/system_state.h"
 #include "lemon/system_info.h"
 #include "lemon/version.h"
 #include <cctype>
@@ -907,6 +908,14 @@ void Server::setup_routes(httplib::Server &web_server) {
     });
     register_get("telemetry/history/summary", [this](const httplib::Request& req, httplib::Response& res) {
         handle_telemetry_history_summary(req, res);
+    });
+
+    // System State Viewer (Calamansi Juice 2 addition) - a point-in-time
+    // hardware/OS/firmware/AI-stack snapshot, cached ~60s server-side
+    // (?refresh=true bypasses). Distinct from the live-polled /system-stats
+    // above.
+    register_get("system/state", [this](const httplib::Request& req, httplib::Response& res) {
+        handle_system_state(req, res);
     });
 
 
@@ -5266,6 +5275,23 @@ void Server::handle_telemetry_history_clear(const httplib::Request& req, httplib
         res.set_content(nlohmann::json{{"cleared", true}}.dump(), "application/json");
     } catch (const std::exception& e) {
         LOG(ERROR, "Server") << "ERROR in handle_telemetry_history_clear: " << e.what() << std::endl;
+        res.status = 500;
+        nlohmann::json error = {{"error", e.what()}};
+        res.set_content(error.dump(), "application/json");
+    }
+}
+
+void Server::handle_system_state(const httplib::Request& req, httplib::Response& res) {
+    if (req.method == "HEAD") {
+        res.status = 200;
+        return;
+    }
+    try {
+        bool refresh = req.has_param("refresh") && req.get_param_value("refresh") == "true";
+        nlohmann::json snapshot = get_system_state_with_cache(refresh);
+        res.set_content(snapshot.dump(), "application/json");
+    } catch (const std::exception& e) {
+        LOG(ERROR, "Server") << "ERROR in handle_system_state: " << e.what() << std::endl;
         res.status = 500;
         nlohmann::json error = {{"error", e.what()}};
         res.set_content(error.dump(), "application/json");

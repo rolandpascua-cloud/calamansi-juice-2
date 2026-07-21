@@ -2604,6 +2604,72 @@ footer {
     color: var(--text-secondary);
 }
 
+/* Calamansi Juice 2 addition: System State Viewer (SystemStatePanel.tsx). */
+
+.system-state-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 14px 14px;
+}
+
+.system-state-generated-at {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    margin-right: auto;
+}
+
+.system-state-refresh-btn {
+    border-color: var(--border-4) !important;
+    background: var(--bg-primary) !important;
+    color: var(--text-secondary) !important;
+}
+
+.system-state-card {
+    border: 1px solid var(--border-4);
+    border-radius: 6px;
+    margin-bottom: 2px;
+}
+
+.system-state-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 12px 8px;
+}
+
+.system-state-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 3px 0;
+    font-size: 0.7rem;
+    border-bottom: 1px solid var(--bg-alpha-03);
+}
+
+.system-state-row:last-child {
+    border-bottom: none;
+}
+
+.system-state-row-label {
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.system-state-row-value {
+    color: var(--text-primary);
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.system-state-row-value.unavailable {
+    color: var(--text-aaa);
+    font-style: italic;
+    cursor: help;
+    text-decoration: underline dotted;
+}
+
 .backend-row-item {
     padding-top: 2px;
     padding-bottom: 2px;

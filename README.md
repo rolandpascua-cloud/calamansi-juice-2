@@ -463,8 +463,9 @@ Click to learn more about the [available APIs](./docs/api/README.md) and how to 
 On top of everything upstream Lemonade v11.0.0 provides, this fork adds a few extra GUI panels + REST endpoints. See [MERGING.md](MERGING.md) for the full "ours vs theirs" file list this section maps to.
 
 - **History** — a persistent, queryable log of past requests (model, tokens, latency, tokens/sec, backend, device, success/error), with a GUI tab showing a sortable/filterable table and charts. Survives server restarts (SQLite-backed, stored alongside `config.json`). Full prompt/response text is **never stored by default** — only opt-in via `telemetry.history.store_previews` in `config.json`, truncated per `telemetry.history.preview_max_chars`. See [docs/calamansi/history.md](docs/calamansi/history.md) for the API reference and config keys.
+- **System** — a point-in-time "what am I running on, and what's installed" inspector: hardware, OS/kernel, firmware, and the AI software stack (ROCm/HIP/Mesa/backend versions), each section independently degrading to a labeled "unavailable" reason (missing tool, needs root, not applicable on this platform) rather than erroring. Refreshed on tab open + an explicit button only, cached ~60s server-side. Includes "Copy as text" / "Export JSON" for bug reports. See [docs/calamansi/system-state.md](docs/calamansi/system-state.md).
 
-More panels (a point-in-time System State inspector, a live Resources dashboard) are planned as separate follow-up additions — this section will grow as they land.
+A live Resources dashboard is planned as a separate follow-up addition — this section will grow as it lands.
 
 ## FAQ
 

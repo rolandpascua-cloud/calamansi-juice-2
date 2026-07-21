@@ -169,6 +169,10 @@ private:
     void handle_telemetry_history_summary(const httplib::Request& req, httplib::Response& res);
     void handle_telemetry_history_clear(const httplib::Request& req, httplib::Response& res);
 
+    // System State Viewer endpoint (Calamansi Juice 2 addition — see
+    // system_state.h and docs/calamansi/system-state.md).
+    void handle_system_state(const httplib::Request& req, httplib::Response& res);
+
     // Backend management endpoint handlers
     void handle_install(const httplib::Request& req, httplib::Response& res);
     void handle_install_dry_run(const httplib::Request& req, httplib::Response& res);
