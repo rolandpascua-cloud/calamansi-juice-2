@@ -546,8 +546,8 @@ if(WIN32)
 
         file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}" WIX_SOURCE_DIR_NATIVE)
         file(TO_NATIVE_PATH "${WIX_PRODUCT_WXS}" WIX_PRODUCT_WXS_NATIVE)
-        file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lemonade-server-minimal.msi" WIX_MINIMAL_OUTPUT_NATIVE)
-        file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lemonade.msi" WIX_FULL_OUTPUT_NATIVE)
+        file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/calamansi-juice-server-minimal.msi" WIX_MINIMAL_OUTPUT_NATIVE)
+        file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/calamansi-juice-server-full.msi" WIX_FULL_OUTPUT_NATIVE)
         file(TO_NATIVE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/cpp" WIX_CPP_SOURCE_DIR_NATIVE)
         file(TO_NATIVE_PATH "${CMAKE_BINARY_DIR}" WIX_BUILD_DIR_NATIVE)
         file(TO_NATIVE_PATH "${TAURI_APP_UNPACKED_DIR}" WIX_TAURI_SOURCE_NATIVE)
@@ -587,7 +587,7 @@ if(WIN32)
                 -out "${WIX_MINIMAL_OUTPUT_NATIVE}"
                 "${WIX_PRODUCT_WXS_NATIVE}"
                 "${WIX_WEBAPP_FRAGMENT_NATIVE}"
-            COMMAND ${CMAKE_COMMAND} -E echo "MSI installer created: lemonade-server-minimal.msi"
+            COMMAND ${CMAKE_COMMAND} -E echo "MSI installer created: calamansi-juice-server-minimal.msi"
             DEPENDS ${EXECUTABLE_NAME}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Building WiX MSI installer (server + web-app)"
@@ -626,7 +626,7 @@ if(WIN32)
                 "${WIX_PRODUCT_WXS_NATIVE}"
                 "${WIX_TAURI_FRAGMENT_NATIVE}"
                 "${WIX_WEBAPP_FRAGMENT_NATIVE}"
-            COMMAND ${CMAKE_COMMAND} -E echo "MSI installer created: lemonade.msi"
+            COMMAND ${CMAKE_COMMAND} -E echo "MSI installer created: calamansi-juice-server-full.msi"
             DEPENDS ${EXECUTABLE_NAME}
             WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
             COMMENT "Building WiX MSI installer (with Tauri app)"
@@ -1306,9 +1306,9 @@ endif()
 if(APPLE)
     # SETUP IDENTITIES
     set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-    set(CPACK_PACKAGE_VENDOR "Lemonade")
-    set(CPACK_PACKAGE_CONTACT "lemonade@amd.com")
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Lemonade Local LLM Server")
+    set(CPACK_PACKAGE_VENDOR "Calamansi Juice")
+    set(CPACK_PACKAGE_CONTACT "calamansi@amd.com")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Calamansi Juice Local LLM Server")
     set(CPACK_PACKAGE_DESCRIPTION "A lightweight, high-performance local LLM server.")
     set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/../../LICENSE")
     # Skip readme page entirely
@@ -1433,7 +1433,7 @@ if(APPLE)
     if(CMAKE_BUILD_TYPE STREQUAL "Release")
         install(CODE "
             execute_process(
-                COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/${EXECUTABLE_NAME}\"
+                COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/CalamansiJuice-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/${EXECUTABLE_NAME}\"
                 RESULT_VARIABLE SIGN_RESULT
             )
             if(NOT SIGN_RESULT EQUAL 0)
@@ -1450,7 +1450,7 @@ if(APPLE)
         if(CMAKE_BUILD_TYPE STREQUAL "Release")
             install(CODE "
                 execute_process(
-                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/calamansi-tray\"
+                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/CalamansiJuice-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/calamansi-tray\"
                     RESULT_VARIABLE SIGN_RESULT
                 )
                 if(NOT SIGN_RESULT EQUAL 0)
@@ -1468,7 +1468,7 @@ if(APPLE)
         if(CMAKE_BUILD_TYPE STREQUAL "Release")
             install(CODE "
                 execute_process(
-                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/Lemonade-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/calamansi\"
+                    COMMAND codesign --force --options runtime --timestamp --entitlements \"${ENTITLEMENTS_PATH}\" --sign \"${SIGNING_IDENTITY}\" -v \"${CMAKE_BINARY_DIR}/_CPack_Packages/Darwin/productbuild/CalamansiJuice-${PROJECT_VERSION}-Darwin/Runtime/usr/local/bin/calamansi\"
                     RESULT_VARIABLE SIGN_RESULT
                 )
                 if(NOT SIGN_RESULT EQUAL 0)
@@ -1478,8 +1478,8 @@ if(APPLE)
         endif()
     endif()
 
-    # Resources -> /Library/Application Support/Lemonade/resources
-    install(DIRECTORY ${CMAKE_BINARY_DIR}/resources/ DESTINATION "/Library/Application Support/Lemonade/resources" COMPONENT Resources)
+    # Resources -> /Library/Application Support/Calamansi Juice/resources
+    install(DIRECTORY ${CMAKE_BINARY_DIR}/resources/ DESTINATION "/Library/Application Support/Calamansi Juice/resources" COMPONENT Resources)
 
     # App Bundle -> /Applications
     install(DIRECTORY "${TAURI_APP_BUILD_COPY}"
@@ -1492,14 +1492,14 @@ if(APPLE)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/com.calamansi.server.plist" DESTINATION "/Library/LaunchDaemons" COMPONENT Runtime)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/com.calamansi.tray.plist" DESTINATION "/Library/LaunchAgents" COMPONENT Runtime)
 
-    # Placeholder -> /usr/local/share/lemonade-server
+    # Placeholder -> /usr/local/share/calamansi-juice-server
     file(WRITE "${CMAKE_BINARY_DIR}/.keep" "")
-    install(FILES "${CMAKE_BINARY_DIR}/.keep" DESTINATION "usr/local/share/lemonade-server" COMPONENT Runtime)
+    install(FILES "${CMAKE_BINARY_DIR}/.keep" DESTINATION "usr/local/share/calamansi-juice-server" COMPONENT Runtime)
 
     # ackaging & Notarization
     set(CPACK_GENERATOR "productbuild")
-    set(CPACK_PACKAGE_NAME "Lemonade")
-    set(CPACK_PRODUCTBUILD_IDENTIFIER "com.lemonade.server")
+    set(CPACK_PACKAGE_NAME "CalamansiJuice")
+    set(CPACK_PRODUCTBUILD_IDENTIFIER "com.calamansi.server")
 
     # Declare the package arm64-only so the macOS Installer does not assume our
     # postflight script needs x86_64 and prompt to install Rosetta on Apple Silicon.
@@ -1512,8 +1512,8 @@ if(APPLE)
     endif()
     set(CPACK_PRODUCTBUILD_RELOCATE OFF)  # Prevent install_name_tool from invalidating signatures
     set(CPACK_COMPONENTS_GROUPING ALL_COMPONENTS_IN_ONE)
-    set(CPACK_PRODUCTBUILD_BUNDLE com.lemonade.server.Applications OFF)
-    set(CPACK_PRODUCTBUILD_BUNDLE_ID com.lemonade.server.Applications)
+    set(CPACK_PRODUCTBUILD_BUNDLE com.calamansi.server.Applications OFF)
+    set(CPACK_PRODUCTBUILD_BUNDLE_ID com.calamansi.server.Applications)
 
     set(CPACK_PACKAGING_INSTALL_PREFIX "/usr/local")
     set(CPACK_SET_DESTDIR ON)
@@ -1539,7 +1539,7 @@ if(APPLE)
 
     find_program(XCRUN_EXE xcrun)
     if(XCRUN_EXE)
-        set(PKG_NAME "Lemonade-${PROJECT_VERSION}-Darwin.pkg")
+        set(PKG_NAME "CalamansiJuice-${PROJECT_VERSION}-Darwin.pkg")
         add_custom_target(notarize
             COMMAND ${CMAKE_COMMAND} -E echo "Submitting ${PKG_NAME} for notarization..."
             COMMAND ${XCRUN_EXE} notarytool submit "${CMAKE_BINARY_DIR}/${PKG_NAME}" --keychain-profile "AC_PASSWORD" --wait --verbose
@@ -1559,9 +1559,9 @@ endif()
 if(UNIX AND NOT APPLE)
     set(CPACK_SET_DESTDIR ON)
     set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
-    set(CPACK_PACKAGE_VENDOR "Lemonade")
-    set(CPACK_PACKAGE_CONTACT "lemonade@amd.com")
-    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Lemonade Local LLM Server")
+    set(CPACK_PACKAGE_VENDOR "Calamansi Juice")
+    set(CPACK_PACKAGE_CONTACT "calamansi@amd.com")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Calamansi Juice Local LLM Server")
     set(CPACK_PACKAGE_DESCRIPTION "A lightweight, high-performance local LLM server with support for multiple backends including llama.cpp, FastFlowLM, and RyzenAI.")
 
     # Only install our executables (not curl/development files)
@@ -1655,7 +1655,11 @@ if(UNIX AND NOT APPLE)
         RENAME calamansi-juice-server.service
     )
 
-    # Install secrets.conf for LEMONADE_API_KEY (still loaded via EnvironmentFile)
+    # Install secrets.conf for LEMONADE_API_KEY (still loaded via EnvironmentFile).
+    # NOTE: /etc/lemonade is the app's config-directory basename (parallel to the
+    # ~/.cache/lemonade, ~/.config/lemonade, and systemd State/RuntimeDirectory=lemonade
+    # data-directory conventions), not installer/package identity — deliberately left
+    # unrenamed for behavioral continuity, same as those other data paths.
     install(FILES ${CMAKE_SOURCE_DIR}/data/secrets.conf
         DESTINATION /etc/lemonade/conf.d
         RENAME zz-secrets.conf
@@ -1731,7 +1735,7 @@ if(UNIX AND NOT APPLE)
         message(STATUS "Building full deb package with Tauri app")
 
         # Full package name
-        set(CPACK_PACKAGE_NAME "lemonade-server")
+        set(CPACK_PACKAGE_NAME "calamansi-juice-server")
 
         # Install the Tauri app binary (single file, unlike Electron's directory tree)
         install(PROGRAMS "${TAURI_APP_UNPACKED_DIR}/${TAURI_EXE_NAME}"
@@ -1792,7 +1796,7 @@ if(UNIX AND NOT APPLE)
         endif()
 
     else()
-        set(CPACK_PACKAGE_NAME "lemonade-server")
+        set(CPACK_PACKAGE_NAME "calamansi-juice-server")
     endif()
 
     # RPM specific variables defined within
@@ -1832,7 +1836,7 @@ else()
     endif()
 endif()
 
-set(EMBEDDABLE_DIR_NAME "lemonade-embeddable-${PROJECT_VERSION}-${EMBEDDABLE_PLATFORM}")
+set(EMBEDDABLE_DIR_NAME "calamansi-juice-embeddable-${PROJECT_VERSION}-${EMBEDDABLE_PLATFORM}")
 set(EMBEDDABLE_STAGING_DIR "${CMAKE_BINARY_DIR}/${EMBEDDABLE_DIR_NAME}")
 
 if(WIN32)

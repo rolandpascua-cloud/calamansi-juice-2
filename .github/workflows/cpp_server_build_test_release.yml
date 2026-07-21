@@ -166,8 +166,8 @@ jobs:
               "build\Release\LemonadeServer.exe",
               "build\app\lemonade-app.exe",
               "build\resources\web-app\index.html",
-              "lemonade-server-minimal.msi",
-              "lemonade.msi"
+              "calamansi-juice-server-minimal.msi",
+              "calamansi-juice-server-full.msi"
           ) | ForEach-Object {
               if (-not (Test-Path $_)) {
                   Write-Host "ERROR: $_ not found!" -ForegroundColor Red
@@ -182,10 +182,10 @@ jobs:
         id: upload-unsigned-msi
         uses: actions/upload-artifact@v7
         with:
-          name: Lemonade_Server_MSI
+          name: Calamansi_Juice_Server_MSI
           path: |
-            lemonade-server-minimal.msi
-            lemonade.msi
+            calamansi-juice-server-minimal.msi
+            calamansi-juice-server-full.msi
           retention-days: 7
 
   sign-msi-installers:
@@ -215,13 +215,13 @@ jobs:
         run: |
           Write-Host "Verifying signed MSI files..." -ForegroundColor Cyan
 
-          if (-not (Test-Path "signed-msi\lemonade-server-minimal.msi")) {
-              Write-Host "ERROR: Signed lemonade-server-minimal.msi not found!" -ForegroundColor Red
+          if (-not (Test-Path "signed-msi\calamansi-juice-server-minimal.msi")) {
+              Write-Host "ERROR: Signed calamansi-juice-server-minimal.msi not found!" -ForegroundColor Red
               exit 1
           }
 
-          if (-not (Test-Path "signed-msi\lemonade.msi")) {
-              Write-Host "ERROR: Signed lemonade.msi not found!" -ForegroundColor Red
+          if (-not (Test-Path "signed-msi\calamansi-juice-server-full.msi")) {
+              Write-Host "ERROR: Signed calamansi-juice-server-full.msi not found!" -ForegroundColor Red
               exit 1
           }
 
@@ -231,10 +231,10 @@ jobs:
       - name: Upload Signed MSI Installers
         uses: actions/upload-artifact@v7
         with:
-          name: Lemonade_Server_MSI_Signed
+          name: Calamansi_Juice_Server_MSI_Signed
           path: |
-            signed-msi/lemonade-server-minimal.msi
-            signed-msi/lemonade.msi
+            signed-msi/calamansi-juice-server-minimal.msi
+            signed-msi/calamansi-juice-server-full.msi
           retention-days: 7
 
   build-lemonade-deb:
@@ -511,8 +511,8 @@ jobs:
           echo "Creating .rpm package with CPack..."
           cpack -G RPM -V
 
-          CPACK_RPM="lemonade-server-${LEMONADE_VERSION}.${{ matrix.rpm-arch }}.rpm"
-          RPM_FILE="lemonade-server-${LEMONADE_VERSION}-fc${{ matrix.fedora-version }}.${{ matrix.rpm-arch }}.rpm"
+          CPACK_RPM="calamansi-juice-server-${LEMONADE_VERSION}.${{ matrix.rpm-arch }}.rpm"
+          RPM_FILE="calamansi-juice-server-${LEMONADE_VERSION}-fc${{ matrix.fedora-version }}.${{ matrix.rpm-arch }}.rpm"
 
           if [ ! -f "$CPACK_RPM" ]; then
               echo "ERROR: .rpm package not created!"
@@ -529,8 +529,8 @@ jobs:
       - name: Upload .rpm package
         uses: actions/upload-artifact@v7
         with:
-          name: lemonade-rpm-fedora-${{ matrix.fedora-version }}-${{ matrix.artifact-suffix }}
-          path: build/lemonade-server-${{ env.LEMONADE_VERSION }}-fc${{ matrix.fedora-version }}.${{ matrix.rpm-arch }}.rpm
+          name: calamansi-juice-rpm-fedora-${{ matrix.fedora-version }}-${{ matrix.artifact-suffix }}
+          path: build/calamansi-juice-server-${{ env.LEMONADE_VERSION }}-fc${{ matrix.fedora-version }}.${{ matrix.rpm-arch }}.rpm
           retention-days: 7
 
   build-lemonade-macos-dmg:
@@ -605,7 +605,7 @@ jobs:
         if: steps.check_signing.outputs.has_signing == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: lemonade-macos-pkg
+          name: calamansi-juice-macos-pkg
           path: build/*.pkg
           retention-days: 7
 
@@ -926,7 +926,7 @@ jobs:
           cmake --preset default -DBUILD_WEB_APP=OFF
           cmake --build --preset default --target embeddable
 
-          ARCHIVE="build/lemonade-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}.tar.gz"
+          ARCHIVE="build/calamansi-juice-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}.tar.gz"
           test -f "$ARCHIVE"
           echo "Archive contents:"
           tar tzf "$ARCHIVE"
@@ -935,8 +935,8 @@ jobs:
       - name: Upload embeddable archive
         uses: actions/upload-artifact@v4
         with:
-          name: lemonade-embeddable-linux-${{ matrix.artifact-suffix }}
-          path: build/lemonade-embeddable-${{ env.LEMONADE_VERSION }}-${{ matrix.platform }}.tar.gz
+          name: calamansi-juice-embeddable-linux-${{ matrix.artifact-suffix }}
+          path: build/calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-${{ matrix.platform }}.tar.gz
           retention-days: 7
 
   build-lemonade-linux-arm64:
@@ -1043,7 +1043,7 @@ jobs:
           cmake --build build --config Release --target embeddable
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
-          $archive = "build\lemonade-embeddable-$($env:LEMONADE_VERSION)-windows-x64.zip"
+          $archive = "build\calamansi-juice-embeddable-$($env:LEMONADE_VERSION)-windows-x64.zip"
           if (-not (Test-Path $archive)) { throw "Archive not found: $archive" }
           Write-Host "Archive created:" -ForegroundColor Green
           Get-ChildItem $archive
@@ -1051,8 +1051,8 @@ jobs:
       - name: Upload embeddable archive
         uses: actions/upload-artifact@v4
         with:
-          name: lemonade-embeddable-windows
-          path: build/lemonade-embeddable-${{ env.LEMONADE_VERSION }}-windows-x64.zip
+          name: calamansi-juice-embeddable-windows
+          path: build/calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-windows-x64.zip
           retention-days: 7
 
   build-lemonade-embeddable-macos:
@@ -1089,7 +1089,7 @@ jobs:
           cmake --preset default -DBUILD_WEB_APP=OFF
           cmake --build --preset default --target embeddable
 
-          ARCHIVE="build/lemonade-embeddable-${LEMONADE_VERSION}-macos-arm64.tar.gz"
+          ARCHIVE="build/calamansi-juice-embeddable-${LEMONADE_VERSION}-macos-arm64.tar.gz"
           test -f "$ARCHIVE"
           echo "Archive contents:"
           tar tzf "$ARCHIVE"
@@ -1098,8 +1098,8 @@ jobs:
       - name: Upload embeddable archive
         uses: actions/upload-artifact@v4
         with:
-          name: lemonade-embeddable-macos
-          path: build/lemonade-embeddable-${{ env.LEMONADE_VERSION }}-macos-arm64.tar.gz
+          name: calamansi-juice-embeddable-macos
+          path: build/calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-macos-arm64.tar.gz
           retention-days: 7
 
 
@@ -1598,7 +1598,7 @@ jobs:
       - name: Download Lemonade .rpm Package
         uses: actions/download-artifact@v7
         with:
-          name: lemonade-rpm-fedora-${{ matrix.fedora-version }}-${{ matrix.artifact-suffix }}
+          name: calamansi-juice-rpm-fedora-${{ matrix.fedora-version }}-${{ matrix.artifact-suffix }}
           path: .
 
       - name: Install and verify Lemonade (.rpm)
@@ -1606,7 +1606,7 @@ jobs:
         run: |
           set -e
 
-          RPM_FILE="lemonade-server-${LEMONADE_VERSION}-fc${{ matrix.fedora-version }}.${{ matrix.rpm-arch }}.rpm"
+          RPM_FILE="calamansi-juice-server-${LEMONADE_VERSION}-fc${{ matrix.fedora-version }}.${{ matrix.rpm-arch }}.rpm"
 
           if [ ! -f "$RPM_FILE" ]; then
               echo "ERROR: .rpm file not found: $RPM_FILE"
@@ -1617,10 +1617,10 @@ jobs:
           dnf install -y shadow-utils "$RPM_FILE"
 
           echo "Installed package information:"
-          rpm -qi lemonade-server
+          rpm -qi calamansi-juice-server
 
           echo "Installed file list:"
-          rpm -ql lemonade-server | sort
+          rpm -ql calamansi-juice-server | sort
 
           test -f /opt/bin/lemonade
           test -f /opt/bin/lemond
@@ -1664,15 +1664,15 @@ jobs:
           - label: Linux
             os: ubuntu-latest
             platform: ubuntu-x64
-            artifact: lemonade-embeddable-linux-x86_64
+            artifact: calamansi-juice-embeddable-linux-x86_64
           - label: Linux ARM64
             os: ubuntu-24.04-arm
             platform: ubuntu-arm64
-            artifact: lemonade-embeddable-linux-arm64
+            artifact: calamansi-juice-embeddable-linux-arm64
           - label: macOS
             os: macos-latest
             platform: macos-arm64
-            artifact: lemonade-embeddable-macos
+            artifact: calamansi-juice-embeddable-macos
     env:
       # Both build jobs read version from the same CMakeLists.txt, so either is fine.
       LEMONADE_VERSION: ${{ needs.build-lemonade-embeddable-linux.outputs.version }}
@@ -1688,11 +1688,11 @@ jobs:
         run: |
           set -e
 
-          ARCHIVE="lemonade-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}.tar.gz"
+          ARCHIVE="calamansi-juice-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}.tar.gz"
           test -f "$ARCHIVE"
           tar xzf "$ARCHIVE"
 
-          DIR="lemonade-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}"
+          DIR="calamansi-juice-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}"
 
           # Verify expected files exist
           test -f "$DIR/lemond"
@@ -1728,7 +1728,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          DIR="lemonade-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}"
+          DIR="calamansi-juice-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}"
           "$DIR/lemond" --version
           "$DIR/lemonade" --version
 
@@ -1736,7 +1736,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          DIR="lemonade-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}"
+          DIR="calamansi-juice-embeddable-${LEMONADE_VERSION}-${{ matrix.platform }}"
           cd "$DIR"
           mkdir -p "$RUNNER_TEMP/xdg-runtime"
           chmod 700 "$RUNNER_TEMP/xdg-runtime"
@@ -1779,7 +1779,7 @@ jobs:
       - name: Download embeddable archive
         uses: actions/download-artifact@v4
         with:
-          name: lemonade-embeddable-windows
+          name: calamansi-juice-embeddable-windows
           path: .
 
       - name: Validate archive structure
@@ -1787,7 +1787,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
-          $archiveDir = "lemonade-embeddable-$($env:LEMONADE_VERSION)-windows-x64"
+          $archiveDir = "calamansi-juice-embeddable-$($env:LEMONADE_VERSION)-windows-x64"
           Expand-Archive -Path "$archiveDir.zip" -DestinationPath .
 
           # Verify expected files
@@ -1829,7 +1829,7 @@ jobs:
         shell: PowerShell
         run: |
           $ErrorActionPreference = "Stop"
-          $archiveDir = "lemonade-embeddable-$($env:LEMONADE_VERSION)-windows-x64"
+          $archiveDir = "calamansi-juice-embeddable-$($env:LEMONADE_VERSION)-windows-x64"
           & "$archiveDir\lemond.exe" --version
           & "$archiveDir\lemonade.exe" --version
 
@@ -1837,7 +1837,7 @@ jobs:
         shell: PowerShell
         run: |
           $ErrorActionPreference = "Stop"
-          $archiveDir = "lemonade-embeddable-$($env:LEMONADE_VERSION)-windows-x64"
+          $archiveDir = "calamansi-juice-embeddable-$($env:LEMONADE_VERSION)-windows-x64"
 
           Push-Location $archiveDir
           $proc = Start-Process -FilePath ".\lemond.exe" -ArgumentList ".\" -PassThru -NoNewWindow
@@ -1894,7 +1894,7 @@ jobs:
         if: needs.build-lemonade-macos-dmg.outputs.has_signing == 'true'
         uses: actions/download-artifact@v7
         with:
-          name: lemonade-macos-pkg
+          name: calamansi-juice-macos-pkg
           path: .
 
       - name: Install Lemonade Server (.pkg)
@@ -2302,7 +2302,7 @@ jobs:
         if: runner.os == 'macOS' && needs.build-lemonade-macos-dmg.outputs.has_signing == 'true'
         uses: actions/download-artifact@v7
         with:
-          name: lemonade-macos-pkg
+          name: calamansi-juice-macos-pkg
           path: .
 
       - name: Install Lemonade Server (.pkg)
@@ -2640,23 +2640,23 @@ jobs:
         with:
           sparse-checkout: .github
 
-      - name: Download Signed Lemonade Server Installer (Windows)
+      - name: Download Signed Calamansi Juice Server Installer (Windows)
         uses: actions/download-artifact@v7
         with:
-          name: Lemonade_Server_MSI_Signed
+          name: Calamansi_Juice_Server_MSI_Signed
           path: .
 
-      - name: Download Lemonade .rpm Packages (x86_64)
+      - name: Download Calamansi Juice .rpm Packages (x86_64)
         uses: actions/download-artifact@v7
         with:
-          pattern: lemonade-rpm-fedora-*-x86_64
+          pattern: calamansi-juice-rpm-fedora-*-x86_64
           path: .
           merge-multiple: true
 
-      - name: Download Lemonade .rpm Packages (ARM64)
+      - name: Download Calamansi Juice .rpm Packages (ARM64)
         uses: actions/download-artifact@v7
         with:
-          pattern: lemonade-rpm-fedora-*-arm64
+          pattern: calamansi-juice-rpm-fedora-*-arm64
           path: .
           merge-multiple: true
 
@@ -2672,50 +2672,50 @@ jobs:
           name: lemonade-debian13-arm64
           path: .
 
-      - name: Download Lemonade macOS .pkg Package
+      - name: Download Calamansi Juice macOS .pkg Package
         uses: actions/download-artifact@v7
         with:
-          name: lemonade-macos-pkg
+          name: calamansi-juice-macos-pkg
           path: .
 
-      - name: Download Lemonade Embeddable (Linux, X86_64)
+      - name: Download Calamansi Juice Embeddable (Linux, X86_64)
         uses: actions/download-artifact@v4
         with:
-          name: lemonade-embeddable-linux-x86_64
+          name: calamansi-juice-embeddable-linux-x86_64
           path: .
 
-      - name: Download Lemonade Embeddable (Linux, ARM64)
+      - name: Download Calamansi Juice Embeddable (Linux, ARM64)
         uses: actions/download-artifact@v4
         with:
-          name: lemonade-embeddable-linux-arm64
+          name: calamansi-juice-embeddable-linux-arm64
           path: .
 
-      - name: Download Lemonade Embeddable (Windows)
+      - name: Download Calamansi Juice Embeddable (Windows)
         uses: actions/download-artifact@v4
         with:
-          name: lemonade-embeddable-windows
+          name: calamansi-juice-embeddable-windows
           path: .
 
-      - name: Download Lemonade Embeddable (macOS)
+      - name: Download Calamansi Juice Embeddable (macOS)
         uses: actions/download-artifact@v4
         with:
-          name: lemonade-embeddable-macos
+          name: calamansi-juice-embeddable-macos
           path: .
 
       - name: Verify release artifacts
         run: |
           echo "Release artifacts:"
-          ls -lh lemonade-server-minimal.msi
-          ls -lh lemonade.msi
-          ls -lh lemonade-server-*.x86_64.rpm
-          ls -lh lemonade-server-*.aarch64.rpm
+          ls -lh calamansi-juice-server-minimal.msi
+          ls -lh calamansi-juice-server-full.msi
+          ls -lh calamansi-juice-server-*.x86_64.rpm
+          ls -lh calamansi-juice-server-*.aarch64.rpm
           ls -lh lemonade-server_${LEMONADE_VERSION}-debian13_amd64.deb
           ls -lh lemonade-server_${LEMONADE_VERSION}-debian13_arm64.deb
           ls -lh *.pkg
-          ls -lh lemonade-embeddable-${LEMONADE_VERSION}-ubuntu-x64.tar.gz
-          ls -lh lemonade-embeddable-${LEMONADE_VERSION}-ubuntu-arm64.tar.gz
-          ls -lh lemonade-embeddable-${LEMONADE_VERSION}-windows-x64.zip
-          ls -lh lemonade-embeddable-${LEMONADE_VERSION}-macos-arm64.tar.gz
+          ls -lh calamansi-juice-embeddable-${LEMONADE_VERSION}-ubuntu-x64.tar.gz
+          ls -lh calamansi-juice-embeddable-${LEMONADE_VERSION}-ubuntu-arm64.tar.gz
+          ls -lh calamansi-juice-embeddable-${LEMONADE_VERSION}-windows-x64.zip
+          ls -lh calamansi-juice-embeddable-${LEMONADE_VERSION}-macos-arm64.tar.gz
 
       - name: Generate release notes
         id: release-notes
@@ -2731,15 +2731,15 @@ jobs:
           name: ${{ github.ref_name }}
           body_path: ${{ steps.release-notes.outputs.release_notes_file }}
           files: |
-            lemonade-server-minimal.msi
-            lemonade.msi
-            lemonade-server-*.x86_64.rpm
-            lemonade-server-*.aarch64.rpm
+            calamansi-juice-server-minimal.msi
+            calamansi-juice-server-full.msi
+            calamansi-juice-server-*.x86_64.rpm
+            calamansi-juice-server-*.aarch64.rpm
             lemonade-server_${{ env.LEMONADE_VERSION }}-debian13_amd64.deb
             lemonade-server_${{ env.LEMONADE_VERSION }}-debian13_arm64.deb
             *.pkg
-            lemonade-embeddable-${{ env.LEMONADE_VERSION }}-ubuntu-x64.tar.gz
-            lemonade-embeddable-${{ env.LEMONADE_VERSION }}-ubuntu-arm64.tar.gz
-            lemonade-embeddable-${{ env.LEMONADE_VERSION }}-windows-x64.zip
-            lemonade-embeddable-${{ env.LEMONADE_VERSION }}-macos-arm64.tar.gz
+            calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-ubuntu-x64.tar.gz
+            calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-ubuntu-arm64.tar.gz
+            calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-windows-x64.zip
+            calamansi-juice-embeddable-${{ env.LEMONADE_VERSION }}-macos-arm64.tar.gz
           fail_on_unmatched_files: true

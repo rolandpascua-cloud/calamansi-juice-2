@@ -7,7 +7,7 @@ inputs:
   artifact-name:
     description: 'Name of the artifact to download'
     required: false
-    default: 'lemonade-macos-pkg'
+    default: 'calamansi-juice-macos-pkg'
   download-artifact:
     description: 'Whether to download the artifact (set to false if already downloaded)'
     required: false

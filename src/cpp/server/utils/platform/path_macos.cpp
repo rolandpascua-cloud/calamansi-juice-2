@@ -88,7 +88,7 @@ public:
 
     std::vector<std::string> get_install_prefixes() override {
         std::vector<std::string> prefixes = {
-            "/Library/Application Support/Lemonade",
+            "/Library/Application Support/Calamansi Juice",
             "/usr/local/share/lemonade-server",
             "/opt/share/lemonade-server",
             "/usr/share/lemonade-server"

@@ -168,9 +168,9 @@ runs:
             Write-Host "Product '$productName' not found installed via MSI." -ForegroundColor Gray
 
             # Fallback: Check if we can uninstall via the MSI file if it exists in current directory
-            if (Test-Path "lemonade-server-minimal.msi") {
-                Write-Host "Found lemonade-server-minimal.msi in current directory. Attempting uninstall via file..." -ForegroundColor Yellow
-                $proc = Start-Process -FilePath "msiexec.exe" -ArgumentList "/x lemonade-server-minimal.msi /qn" -Wait -PassThru
+            if (Test-Path "calamansi-juice-server-minimal.msi") {
+                Write-Host "Found calamansi-juice-server-minimal.msi in current directory. Attempting uninstall via file..." -ForegroundColor Yellow
+                $proc = Start-Process -FilePath "msiexec.exe" -ArgumentList "/x calamansi-juice-server-minimal.msi /qn" -Wait -PassThru
 
                 if ($proc.ExitCode -eq 0) {
                     Write-Host "Uninstall via MSI file successful!" -ForegroundColor Green

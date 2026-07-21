@@ -7,7 +7,7 @@ inputs:
   artifact-name:
     description: 'Name of the artifact to download'
     required: false
-    default: 'Lemonade_Server_MSI'
+    default: 'Calamansi_Juice_Server_MSI'
 
 runs:
   using: "composite"
@@ -26,14 +26,14 @@ runs:
         Write-Host "Installing Lemonade Server to: $installPath" -ForegroundColor Cyan
         Write-Host "Log file will be at: $logPath" -ForegroundColor Gray
 
-        if (-not (Test-Path "lemonade-server-minimal.msi")) {
-            Write-Host "ERROR: lemonade-server-minimal.msi not found in current directory!" -ForegroundColor Red
+        if (-not (Test-Path "calamansi-juice-server-minimal.msi")) {
+            Write-Host "ERROR: calamansi-juice-server-minimal.msi not found in current directory!" -ForegroundColor Red
             Get-ChildItem
             exit 1
         }
 
         # Run installer silently with verbose logging
-        $args = "/i lemonade-server-minimal.msi /qn INSTALLDIR=`"$installPath`" /L*V `"$logPath`""
+        $args = "/i calamansi-juice-server-minimal.msi /qn INSTALLDIR=`"$installPath`" /L*V `"$logPath`""
         $p = Start-Process -FilePath "msiexec.exe" -ArgumentList $args -Wait -PassThru
 
         if ($p.ExitCode -ne 0) {
