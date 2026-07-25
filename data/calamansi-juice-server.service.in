@@ -32,7 +32,13 @@ EnvironmentFile=-/etc/lemonade/conf.d/*.conf
 # though the tools are installed (same class of gap found and fixed for
 # strix-halo-dashboard.service.in via live testing).
 Environment=PATH=/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/calamansid
+# --port overrides config.json's default port (13305), which a stock
+# Lemonade install's lemond.service also defaults to - without this,
+# whichever of the two starts second fails to bind and loops in
+# Restart=on-failure, while the other keeps answering on 13305 and
+# silently serves stock Lemonade's endpoints instead of this fork's
+# (missing the history/system/resources routes, so those 404).
+ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/calamansid --port 13306
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s

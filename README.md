@@ -78,16 +78,16 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now calamansi-juice-server
 ```
 
-`cmake --install` places the `calamansid` server and `calamansi` CLI on your `PATH`, along with the `calamansi-juice-server.service` unit and the pre-built web app. Once the service is running:
+`cmake --install` places the `calamansid` server and `calamansi` CLI on your `PATH`, along with the `calamansi-juice-server.service` unit and the pre-built web app. The systemd unit runs on **port 13306**, not the default 13305 — that keeps it from colliding with a stock Lemonade install's `lemond.service`, which listens on 13305 by default and may already be present/enabled on the same machine. Once the service is running:
 
-- **Web UI**: open `http://localhost:13305/` in a browser — the same interface as the desktop app, served directly by `calamansid`.
+- **Web UI**: open `http://localhost:13306/` in a browser — the same interface as the desktop app, served directly by `calamansid`.
 - **CLI**: `calamansi status`, `calamansi run <model>`, etc. — see `calamansi --help`.
-- **REST API**: OpenAI-compatible endpoints under `http://localhost:13305/api/v1/...` (see [Connect Calamansi Juice 2 Server to Your Application](#connect-calamansi-juice-2-server-to-your-application) below).
+- **REST API**: OpenAI-compatible endpoints under `http://localhost:13306/api/v1/...` (see [Connect Calamansi Juice 2 Server to Your Application](#connect-calamansi-juice-2-server-to-your-application) below, adjusting the port if you're running the systemd service rather than a manual/default-port instance).
 
 Confirm it's healthy with:
 
 ```bash
-curl http://localhost:13305/api/v1/health
+curl http://localhost:13306/api/v1/health
 ```
 
 Full build prerequisites and platform-specific notes: [docs/dev/getting-started.md](docs/dev/getting-started.md).
