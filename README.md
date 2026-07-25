@@ -64,6 +64,44 @@ A live-updating resource monitor (CPU/memory/GPU/NPU/disk/sensors, polled ~2s, p
 
 See [docs/calamansi/resources.md](docs/calamansi/resources.md).
 
+## Running Calamansi Juice 2 (Linux, from source)
+
+This fork doesn't have hosted installers yet (see [MERGING.md](MERGING.md)), so on Linux the supported path is building and installing from source:
+
+```bash
+git clone https://github.com/rolandpascua-cloud/calamansi-juice-2.git
+cd calamansi-juice-2
+./setup.sh
+cmake --build build
+sudo cmake --install build
+sudo systemctl daemon-reload
+sudo systemctl enable --now calamansi-juice-server
+```
+
+`cmake --install` places the `calamansid` server and `calamansi` CLI on your `PATH`, along with the `calamansi-juice-server.service` unit and the pre-built web app. Once the service is running:
+
+- **Web UI**: open `http://localhost:13305/` in a browser — the same interface as the desktop app, served directly by `calamansid`.
+- **CLI**: `calamansi status`, `calamansi run <model>`, etc. — see `calamansi --help`.
+- **REST API**: OpenAI-compatible endpoints under `http://localhost:13305/api/v1/...` (see [Connect Calamansi Juice 2 Server to Your Application](#connect-calamansi-juice-2-server-to-your-application) below).
+
+Confirm it's healthy with:
+
+```bash
+curl http://localhost:13305/api/v1/health
+```
+
+Full build prerequisites and platform-specific notes: [docs/dev/getting-started.md](docs/dev/getting-started.md).
+
+### Optional: bundled Strix Halo Dashboard
+
+On Linux, a second, standalone resource-monitoring service installs alongside the server (see [Resources](#resources) above). It isn't started by default:
+
+```bash
+sudo systemctl enable --now strix-halo-dashboard
+```
+
+Then open `http://localhost:8420/`.
+
 ## Getting Started
 
 1. **Install**: [Windows](https://lemonade-server.ai/install_options.html#windows) · [Linux](https://lemonade-server.ai/install_options.html#linux) · [macOS](https://lemonade-server.ai/install_options.html#macos) · [Docker](https://lemonade-server.ai/install_options.html#docker) · [Source](./docs/dev/getting-started.md)
