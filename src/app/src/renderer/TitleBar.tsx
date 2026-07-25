@@ -136,7 +136,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
         <div className="title-bar-left" data-tauri-drag-region>
           <img
             src={logo}
-            alt="Lemonade"
+            alt="Calamansi"
             className="title-bar-logo"
             data-tauri-drag-region="false"
           />
@@ -232,10 +232,10 @@ const TitleBar: React.FC<TitleBarProps> = ({
               </span>
               {activeMenu === 'help' && (
                 <div className="menu-dropdown">
-                  <div className="menu-option" onClick={() => { window.api.openExternal('https://lemonade-server.ai/docs/'); setActiveMenu(null); }}>
+                  <div className="menu-option" onClick={() => { window.api.openExternal('https://github.com/rolandpascua-cloud/calamansi-juice-2'); setActiveMenu(null); }}>
                     Documentation
                   </div>
-                  <div className="menu-option" onClick={() => { window.api.openExternal('https://github.com/lemonade-sdk/lemonade/releases'); setActiveMenu(null); }}>
+                  <div className="menu-option" onClick={() => { window.api.openExternal('https://github.com/rolandpascua-cloud/calamansi-juice-2/releases'); setActiveMenu(null); }}>
                     Release Notes
                   </div>
                   <div className="menu-separator"></div>
@@ -248,7 +248,7 @@ const TitleBar: React.FC<TitleBarProps> = ({
           </div>
         </div>
         <div className="title-bar-center" data-tauri-drag-region>
-          <span className="app-title" data-tauri-drag-region>Lemonade</span>
+          <span className="app-title" data-tauri-drag-region>Calamansi</span>
         </div>
         <div className="title-bar-right" data-tauri-drag-region="false">
           <button

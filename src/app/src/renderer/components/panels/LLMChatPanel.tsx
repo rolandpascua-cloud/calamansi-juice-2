@@ -1277,7 +1277,7 @@ const LLMChatPanel: React.FC<LLMChatPanelProps> = ({
         onScroll={handleScroll}
         onClick={editingIndex !== null ? cancelEdit : undefined}
       >
-        {messages.length === 0 && <EmptyState title="Lemonade Chat" />}
+        {messages.length === 0 && <EmptyState title="Calamansi Chat" />}
         {messages.map((message, index) => {
           const isGrayedOut = editingIndex !== null && index > editingIndex;
           const isBubblelessImageMessage = isCollectionImageOnlyMessage(message);

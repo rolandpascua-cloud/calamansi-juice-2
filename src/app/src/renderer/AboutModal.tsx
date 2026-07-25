@@ -133,7 +133,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
     <div className="about-popover" ref={cardRef}>
       <div className="about-popover-header">
         <div>
-          <p className="about-popover-title">Lemonade</p>
+          <p className="about-popover-title">Calamansi</p>
           <p className="about-popover-subtitle">Local AI control center</p>
         </div>
         <button className="about-popover-close" onClick={onClose} title="Close">
