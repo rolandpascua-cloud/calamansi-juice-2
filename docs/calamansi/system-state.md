@@ -51,3 +51,40 @@ Same bearer-token auth as the rest of the REST API — no per-request access sco
 ## GUI
 
 A "System" tab in the left-panel rail, alongside History. Four collapsible cards (Hardware, OS/Kernel, Firmware, AI Software Stack) plus a Driver Stack card. Each unavailable field is shown as "Unavailable" with a hover tooltip explaining why. "Copy as text" and "Export JSON" buttons cover the pasting-into-a-bug-report use case. The panel refreshes on tab open and via an explicit "Refresh" button only — it is deliberately **not** polled automatically, since it's a snapshot/inspector, not a live dashboard.
+
+## Installing the Driver Stack tools
+
+`z13ctl` and `tuned` are both optional — the Driver Stack card just shows "Not installed" for either one if it's missing, same as `asusctl`/`supergfxctl`. Installing them gets you their live status (fan/TDP/power profile for `z13ctl`, the active TuneD profile for `tuned-adm`) instead.
+
+### z13ctl
+
+[`z13ctl`](https://github.com/dahui/z13ctl) is a CLI/daemon for ASUS ROG Flow Z13 hardware control (RGB lighting, performance profiles, battery charge limit, fan curves, TDP, undervolting). Debian/Ubuntu install:
+
+```sh
+# Download the latest z13ctl_*_linux_amd64.deb from:
+# https://github.com/dahui/z13ctl/releases
+sudo apt install ./z13ctl_*.deb
+
+# The .deb installs udev rules, systemd units, and the battery permissions
+# service automatically — you just need group membership to use it:
+sudo usermod -aG users $USER
+# log out and back in for the group membership to take effect
+
+# Verify:
+z13ctl list
+```
+
+See the [z13ctl installation guide](https://dahui.github.io/z13ctl/installation/) for Arch (AUR `z13ctl-bin`), Fedora/RHEL (`.rpm`), building from source, and the optional `ryzen_smu` kernel module (only needed for undervolting).
+
+### tuned
+
+[`tuned`](https://tuned-project.org/) is a general Linux system-tuning daemon (not Z13-specific) that manages performance/power profiles:
+
+```sh
+sudo apt update && sudo apt install tuned -y
+sudo systemctl enable --now tuned
+sudo tuned-adm profile accelerator-performance
+tuned-adm active
+```
+
+`accelerator-performance` is a reasonable default for a machine doing local LLM inference; run `tuned-adm list` to see other available profiles (e.g. `balanced`, `powersave`) if you want to trade performance for battery life.
