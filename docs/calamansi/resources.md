@@ -79,3 +79,5 @@ Same bearer-token auth as the rest of the REST API.
 ## GUI
 
 A "Resources" tab in the left-panel rail: live gauges + sparklines for CPU/memory/GPU, a UMA callout, NPU/amd_iommu/disk status, and a list of other detected local inference services with their status. Polling starts when the tab is opened and stops automatically both when the tab is switched away from (the panel unmounts) and when the browser/app window is backgrounded (`document.hidden`), to avoid needless load.
+
+![Resources tab showing live CPU/memory/GPU gauges, UMA/NPU/disk status, and detected inference services](images/resources-panel.png)

@@ -52,6 +52,8 @@ Same bearer-token auth as the rest of the REST API — no per-request access sco
 
 A "System" tab in the left-panel rail, alongside History. Four collapsible cards (Hardware, OS/Kernel, Firmware, AI Software Stack) plus a Driver Stack card. Each unavailable field is shown as "Unavailable" with a hover tooltip explaining why. "Copy as text" and "Export JSON" buttons cover the pasting-into-a-bug-report use case. The panel refreshes on tab open and via an explicit "Refresh" button only — it is deliberately **not** polled automatically, since it's a snapshot/inspector, not a live dashboard.
 
+![System State tab showing Hardware, OS/Kernel, Firmware, AI Software Stack, and Driver Stack cards, including live z13ctl status and the active tuned-adm profile](images/system-state-panel.png)
+
 ## Installing the Driver Stack tools
 
 `z13ctl` and `tuned` are both optional — the Driver Stack card just shows "Not installed" for either one if it's missing, same as `asusctl`/`supergfxctl`. Installing them gets you their live status (fan/TDP/power profile for `z13ctl`, the active TuneD profile for `tuned-adm`) instead.

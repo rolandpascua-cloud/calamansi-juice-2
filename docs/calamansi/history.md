@@ -94,4 +94,10 @@ These endpoints reuse the server's existing API-key auth — no separate credent
 
 ## GUI
 
-A "History" tab appears in the left-panel rail alongside Models/Backends/Marketplace/Settings, with a sortable/filterable table view, a chart view (tokens/sec by model, requests per day, error rate per day), and a "Clear History" action.
+A "History" tab appears in the left-panel rail alongside Models/Backends/Marketplace/Settings. The table stays compact (Time/Model/Tokens-per-second) to fit the panel's fixed width — route, backend, device, input/output tokens, TTFT, latency, and status are available on row hover instead of as columns. A chart view covers tokens/sec by model, requests per day, and error rate per day. "Download History" exports the complete history (every field, not just the current page) as CSV; "Clear History" deletes all stored records.
+
+![History table view](images/history-table.png)
+
+The downloaded CSV includes every field the table doesn't show inline:
+
+![History CSV export opened in a spreadsheet](images/history-csv-export.png)
