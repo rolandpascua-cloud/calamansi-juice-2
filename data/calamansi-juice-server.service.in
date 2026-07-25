@@ -9,11 +9,17 @@ After=network-online.target
 Type=simple
 User=calamansi
 Group=calamansi
-StateDirectory=lemonade
+# Named "calamansi", not "lemonade": StateDirectory=/RuntimeDirectory= make
+# systemd chown /var/lib/<name> and /run/<name> to User=/Group= on every
+# start. A stock Lemonade install's lemond.service already owns
+# /var/lib/lemonade and /run/lemonade as user "lemonade" - reusing that name
+# here would make this unit fight lemond.service for ownership of the same
+# directories on every start/stop, corrupting a real, unrelated install.
+StateDirectory=calamansi
 StateDirectoryMode=0750
-RuntimeDirectory=lemonade
+RuntimeDirectory=calamansi
 RuntimeDirectoryMode=0700
-WorkingDirectory=%S/lemonade
+WorkingDirectory=%S/calamansi
 # Server settings (port, host, models_dir, …) live in config.json, not env vars.
 # The env-file drop-in is kept for the few env vars calamansid still reads:
 #   HF_TOKEN                 — HuggingFace authentication token
