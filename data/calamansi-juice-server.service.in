@@ -20,6 +20,12 @@ WorkingDirectory=%S/lemonade
 #   LEMONADE_API_KEY         — require API-key auth on all routes
 #   LEMONADE_ADMIN_API_KEY   — API-key specific to internal routes
 EnvironmentFile=-/etc/lemonade/conf.d/*.conf
+# systemd's default PATH omits /opt/rocm/bin (rocm-smi/amd-smi), which
+# system_state.cpp/resource_dashboard.cpp shell out to for GPU/firmware
+# info - without this those fields report "unavailable" under systemd even
+# though the tools are installed (same class of gap found and fixed for
+# strix-halo-dashboard.service.in via live testing).
+Environment=PATH=/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=@CMAKE_INSTALL_FULL_BINDIR@/calamansid
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure

@@ -10,6 +10,11 @@ Group=calamansi
 StateDirectory=strix-halo-dashboard
 StateDirectoryMode=0750
 WorkingDirectory=%S/strix-halo-dashboard
+# systemd's default PATH omits /opt/rocm/bin (rocm-smi/amd-smi), which the
+# dashboard's GPU collector shells out to - without this, GPU stats silently
+# report "unavailable" under systemd even though the tools are installed and
+# the same collector works fine from an interactive shell.
+Environment=PATH=/opt/rocm/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ExecStart=@CMAKE_INSTALL_FULL_LIBEXECDIR@/strix-halo-dashboard-run.sh
 Restart=on-failure
 RestartSec=5s
