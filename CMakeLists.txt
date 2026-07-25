@@ -1666,6 +1666,63 @@ if(UNIX AND NOT APPLE)
         PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ GROUP_WRITE
     )
 
+    # Strix Halo Dashboard (Calamansi Juice 2 addition): a separate FastAPI
+    # companion service (github.com/rolandpascua-cloud/amd-ai-max-dashboard,
+    # MIT-licensed, same author) vendored via FetchContent since it has no
+    # CMakeLists.txt of its own to drive (Python, not C++) - same
+    # Populate-only pattern as sqlite3 above. Linked to from the Resources
+    # tab ("Open Strix Halo Dashboard" button, ResourcesPanel.tsx) rather
+    # than embedded, since it's a genuinely separate process/tech stack.
+    # Pinned to a specific commit for reproducible builds, matching every
+    # other FetchContent dependency in this file.
+    FetchContent_Declare(strix_halo_dashboard
+        GIT_REPOSITORY https://github.com/rolandpascua-cloud/amd-ai-max-dashboard.git
+        GIT_TAG fb6033366ecad13bb4093481fcebbc1479802c60
+    )
+    FetchContent_GetProperties(strix_halo_dashboard)
+    if(NOT strix_halo_dashboard_POPULATED)
+        FetchContent_Populate(strix_halo_dashboard)
+    endif()
+
+    install(DIRECTORY ${strix_halo_dashboard_SOURCE_DIR}/backend
+        DESTINATION share/calamansi-juice-server/strix-halo-dashboard
+        PATTERN "__pycache__" EXCLUDE
+    )
+    install(DIRECTORY ${strix_halo_dashboard_SOURCE_DIR}/frontend
+        DESTINATION share/calamansi-juice-server/strix-halo-dashboard
+    )
+    install(FILES ${strix_halo_dashboard_SOURCE_DIR}/LICENSE
+        DESTINATION share/calamansi-juice-server/strix-halo-dashboard
+        RENAME LICENSE.strix-halo-dashboard
+    )
+
+    # Launcher script: creates the venv on first run (StateDirectory=
+    # strix-halo-dashboard), installs the dashboard's pinned requirements,
+    # execs uvicorn bound to loopback only.
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/data/strix-halo-dashboard-run.sh.in
+        ${CMAKE_BINARY_DIR}/strix-halo-dashboard-run.sh
+        @ONLY
+    )
+    install(PROGRAMS ${CMAKE_BINARY_DIR}/strix-halo-dashboard-run.sh
+        DESTINATION ${CMAKE_INSTALL_LIBEXECDIR}
+    )
+
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/data/strix-halo-dashboard.service.in
+        ${CMAKE_BINARY_DIR}/strix-halo-dashboard.service
+        @ONLY
+    )
+    install(FILES ${CMAKE_BINARY_DIR}/strix-halo-dashboard.service
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/system
+    )
+    if(NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr")
+        lemonade_install_systemd_symlink(
+            "/usr/lib/systemd/system/strix-halo-dashboard.service"
+            "${CMAKE_INSTALL_PREFIX}/lib/systemd/system/strix-halo-dashboard.service"
+        )
+    endif()
+
     # Create symlinks for KaTeX fonts if they exist on the system
     # Check if fonts-katex package fonts are available
     set(KATEX_FONTS_DIR "/usr/share/fonts/truetype/katex")

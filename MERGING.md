@@ -86,6 +86,14 @@ Unlike the rename surface above, these are wholesale new files/features this for
 - `test/server_resources.py` — new test file
 - `docs/calamansi/resources.md`, `mkdocs.yml` (nav entry), `README.md` ("Calamansi Juice 2 Additions" section)
 
+**Bundled companion service — Strix Halo Dashboard** (Linux install only, not embedded in the app itself):
+
+- `CMakeLists.txt` — `FetchContent_Declare`/`Populate` of `github.com/rolandpascua-cloud/amd-ai-max-dashboard` (MIT-licensed, same author), pinned to commit `fb6033366ecad13bb4093481fcebbc1479802c60`; `install()` rules copying `backend/`/`frontend/`/`LICENSE` to `share/calamansi-juice-server/strix-halo-dashboard`, installing the launcher script and systemd unit, and a `strix-halo-dashboard.service` → `/usr/lib/systemd/system` symlink (same pattern as `calamansi-juice-server.service`). Not enabled by default — `systemctl enable --now strix-halo-dashboard` is left to the operator.
+- `data/strix-halo-dashboard-run.sh.in` — new. Launcher: creates a venv under `StateDirectory=strix-halo-dashboard` on first run, installs the dashboard's pinned `requirements.txt`, execs `uvicorn` bound to `127.0.0.1:8420` (loopback-only — deliberately more restrictive than that project's own `run.sh`, which defaults to `0.0.0.0`, since this instance is reached only via the in-app link, not as a standalone LAN tool).
+- `data/strix-halo-dashboard.service.in` — new. Runs as the existing `calamansi` system user; no new sysuser needed.
+- `src/app/src/renderer/ResourcesPanel.tsx`, `src/app/styles/styles.css` — "Open Strix Halo Dashboard" button (opens `http://localhost:8420` via `window.api.openExternal`/`window.open`, matching the existing external-link pattern in `MarketplacePanel.tsx`). This is a link, not an iframe embed — the dashboard is a genuinely separate FastAPI process/tech stack, and this app's own Resources tab already covers similar ground architecturally.
+- `docs/calamansi/resources.md` — new "Bundled Strix Halo Dashboard" section.
+
 ## "Theirs" surface (take upstream wholesale on conflict)
 
 Everything else, including but not limited to:

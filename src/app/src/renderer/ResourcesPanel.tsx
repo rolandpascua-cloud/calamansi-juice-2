@@ -18,6 +18,19 @@ import {
 
 const SYSTEM_POLL_MS = 2000;
 const INFERENCE_POLL_MS = 4500;
+
+// The bundled Strix Halo Dashboard (github.com/rolandpascua-cloud/amd-ai-max-dashboard)
+// is a separate FastAPI service installed/managed alongside this app - see
+// data/strix-halo-dashboard.service.in - not something this panel embeds.
+const STRIX_HALO_DASHBOARD_URL = 'http://localhost:8420';
+
+function openStrixHaloDashboard() {
+  if (window.api?.openExternal) {
+    window.api.openExternal(STRIX_HALO_DASHBOARD_URL);
+    return;
+  }
+  window.open(STRIX_HALO_DASHBOARD_URL, '_blank', 'noopener,noreferrer');
+}
 const SPARKLINE_HISTORY_LENGTH = 30;
 
 interface ResourcesPanelProps {
@@ -173,6 +186,10 @@ const ResourcesPanel: React.FC<ResourcesPanelProps> = () => {
 
   return (
     <div className="system-state-panel resources-panel">
+      <button className="resources-panel-dashboard-link" onClick={openStrixHaloDashboard}>
+        Open Strix Halo Dashboard ↗
+      </button>
+
       {error && <div className="left-panel-empty-state">Error: {error}</div>}
 
       {system && (

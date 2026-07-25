@@ -1,0 +1,25 @@
+#!/bin/bash
+# Calamansi Juice 2 addition: launcher for the bundled Strix Halo Dashboard
+# (github.com/rolandpascua-cloud/amd-ai-max-dashboard), a separate FastAPI
+# service vendored via CMake FetchContent - see CMakeLists.txt and
+# data/strix-halo-dashboard.service.in. Mirrors that project's own run.sh:
+# create a venv on first run, install its pinned requirements, then exec
+# uvicorn. Runs as the systemd service's ExecStart, so $STATE_DIRECTORY is
+# provided by systemd (StateDirectory=strix-halo-dashboard).
+set -euo pipefail
+
+DASHBOARD_DIR="@CMAKE_INSTALL_FULL_DATADIR@/calamansi-juice-server/strix-halo-dashboard"
+VENV_DIR="${STATE_DIRECTORY:-/var/lib/strix-halo-dashboard}/venv"
+
+if [ ! -x "$VENV_DIR/bin/python" ]; then
+    python3 -m venv "$VENV_DIR"
+fi
+
+"$VENV_DIR/bin/pip" install --quiet --disable-pip-version-check \
+    -r "$DASHBOARD_DIR/backend/requirements.txt"
+
+# Bound to loopback only: this is now a bundled companion service reached via
+# the Resources tab's "Open Strix Halo Dashboard" link (http://localhost:8420),
+# not the standalone LAN-facing tool its own run.sh defaults to.
+exec "$VENV_DIR/bin/python" -m uvicorn backend.main:app \
+    --app-dir "$DASHBOARD_DIR" --host 127.0.0.1 --port 8420

@@ -2704,6 +2704,21 @@ footer {
     gap: 12px;
 }
 
+.resources-panel-dashboard-link {
+    align-self: flex-start;
+    padding: 5px 10px;
+    font-size: 0.68rem;
+    border-radius: 4px;
+    border: 1px solid var(--border-4);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.resources-panel-dashboard-link:hover {
+    color: var(--text-primary);
+}
+
 .resources-gauge-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

@@ -80,4 +80,20 @@ Same bearer-token auth as the rest of the REST API.
 
 A "Resources" tab in the left-panel rail: live gauges + sparklines for CPU/memory/GPU, a UMA callout, NPU/amd_iommu/disk status, and a list of other detected local inference services with their status. Polling starts when the tab is opened and stops automatically both when the tab is switched away from (the panel unmounts) and when the browser/app window is backgrounded (`document.hidden`), to avoid needless load.
 
+An "Open Strix Halo Dashboard" button links out to the bundled [Strix Halo Dashboard](#bundled-strix-halo-dashboard) service (`http://localhost:8420`) rather than embedding it — it's a separate FastAPI process, not a panel in this app.
+
 ![Resources tab showing live CPU/memory/GPU gauges, UMA/NPU/disk status, and detected inference services](images/resources-panel.png)
+
+## Bundled Strix Halo Dashboard
+
+On Linux installs, `calamansi-juice-server` also installs and can run [Strix Halo Dashboard](https://github.com/rolandpascua-cloud/amd-ai-max-dashboard) — a standalone FastAPI service (same author, MIT-licensed) that this Resources tab's own architecture was originally modeled on. It's vendored into the build via CMake `FetchContent`, pinned to a specific commit, and installed as its own systemd unit (`strix-halo-dashboard.service`) alongside `calamansi-juice-server.service`.
+
+It is **not enabled by default** — start it with:
+
+```sh
+sudo systemctl enable --now strix-halo-dashboard
+```
+
+On first start it creates its own Python virtual environment (under `StateDirectory=strix-halo-dashboard`, i.e. `/var/lib/strix-halo-dashboard/venv`) and installs its pinned `fastapi`/`uvicorn`/`psutil` dependencies — this requires network access on first run only. It listens on `127.0.0.1:8420` (loopback-only, deliberately more restrictive than that project's own default of `0.0.0.0`, since it's now reached exclusively via the Resources tab's link rather than being a standalone LAN-facing tool).
+
+This is a genuinely separate application, not a Calamansi Juice 2 feature — see its own repository for API/collector details.

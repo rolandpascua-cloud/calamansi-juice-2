@@ -1,0 +1,27 @@
+[Unit]
+Description=Strix Halo Dashboard (bundled with Calamansi Juice 2)
+Documentation=https://github.com/rolandpascua-cloud/amd-ai-max-dashboard
+After=network-online.target calamansi-juice-server.service
+
+[Service]
+Type=simple
+User=calamansi
+Group=calamansi
+StateDirectory=strix-halo-dashboard
+StateDirectoryMode=0750
+WorkingDirectory=%S/strix-halo-dashboard
+ExecStart=@CMAKE_INSTALL_FULL_LIBEXECDIR@/strix-halo-dashboard-run.sh
+Restart=on-failure
+RestartSec=5s
+
+# Security hardening (matches calamansi-juice-server.service)
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=full
+ProtectHome=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+
+[Install]
+WantedBy=multi-user.target
