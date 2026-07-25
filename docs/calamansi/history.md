@@ -57,6 +57,7 @@ Query params (all optional): `since`, `until` (unix ms), `model`, `route`, `back
       "prompt_tokens": 120,
       "completion_tokens": 45,
       "latency_ms": 850.5,
+      "ttft_seconds": 0.18,
       "tokens_per_second": 52.9,
       "backend": "llamacpp",
       "device": "gpu",

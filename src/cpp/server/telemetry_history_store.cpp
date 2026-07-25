@@ -178,6 +178,7 @@ nlohmann::json HistoryRecord::to_json() const {
         {"prompt_tokens", prompt_tokens >= 0 ? nlohmann::json(prompt_tokens) : nlohmann::json(nullptr)},
         {"completion_tokens", completion_tokens >= 0 ? nlohmann::json(completion_tokens) : nlohmann::json(nullptr)},
         {"latency_ms", latency_ms >= 0 ? nlohmann::json(latency_ms) : nlohmann::json(nullptr)},
+        {"ttft_seconds", ttft_seconds >= 0 ? nlohmann::json(ttft_seconds) : nlohmann::json(nullptr)},
         {"tokens_per_second", tokens_per_second >= 0 ? nlohmann::json(tokens_per_second) : nlohmann::json(nullptr)},
         {"backend", backend},
         {"device", device},
@@ -291,6 +292,7 @@ void TelemetryHistoryStore::run_migrations() {
             prompt_tokens INTEGER,
             completion_tokens INTEGER,
             latency_ms REAL,
+            ttft_seconds REAL,
             tokens_per_second REAL,
             backend TEXT,
             device TEXT,
@@ -315,6 +317,30 @@ void TelemetryHistoryStore::run_migrations() {
         if (errmsg) sqlite3_free(errmsg);
         sqlite3_close(db_);
         db_ = nullptr;
+        return;
+    }
+
+    // CREATE TABLE IF NOT EXISTS is a no-op on a pre-existing DB, so a store
+    // created before ttft_seconds existed needs an explicit ALTER TABLE to
+    // pick it up.
+    bool has_ttft_column = false;
+    sqlite3_stmt* pragma_stmt = nullptr;
+    if (sqlite3_prepare_v2(db_, "PRAGMA table_info(telemetry_history);", -1, &pragma_stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(pragma_stmt) == SQLITE_ROW) {
+            const unsigned char* col_name = sqlite3_column_text(pragma_stmt, 1);
+            if (col_name && std::string(reinterpret_cast<const char*>(col_name)) == "ttft_seconds") {
+                has_ttft_column = true;
+                break;
+            }
+        }
+    }
+    sqlite3_finalize(pragma_stmt);
+    if (!has_ttft_column) {
+        sqlite3_exec(db_, "ALTER TABLE telemetry_history ADD COLUMN ttft_seconds REAL;", nullptr, nullptr, &errmsg);
+        if (errmsg) {
+            LOG(WARNING, "TelemetryHistory") << "Failed to add ttft_seconds column: " << errmsg << std::endl;
+            sqlite3_free(errmsg);
+        }
     }
 }
 
@@ -344,6 +370,7 @@ void TelemetryHistoryStore::record_span(const nlohmann::json& span_details) {
             attrs, {"llm.usage.completion_tokens", "embedding.usage.completion_tokens",
                    "reranker.usage.completion_tokens", "gen_ai.usage.output_tokens"});
         auto tokens_per_second = attr_number(attrs, "llm.performance.tokens_per_second");
+        auto ttft_seconds = attr_number(attrs, "llm.performance.time_to_first_token");
 
         // status.code: 1 == success (InferenceSpan::end_with_success), 2 == error
         // (InferenceSpan::end_with_error). Spans that were merely cancel()'d never
@@ -393,9 +420,9 @@ void TelemetryHistoryStore::record_span(const nlohmann::json& span_details) {
         static const char* kInsert = R"SQL(
             INSERT INTO telemetry_history
                 (request_id, timestamp_ms, model_name, route, route_decision,
-                 prompt_tokens, completion_tokens, latency_ms, tokens_per_second,
+                 prompt_tokens, completion_tokens, latency_ms, ttft_seconds, tokens_per_second,
                  backend, device, success, error, preview, auth_token_hash, client_session_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         )SQL";
 
         std::lock_guard<std::mutex> lock(db_mutex_);
@@ -418,6 +445,8 @@ void TelemetryHistoryStore::record_span(const nlohmann::json& span_details) {
         if (completion_tokens_d) sqlite3_bind_int64(stmt, idx++, static_cast<int64_t>(*completion_tokens_d));
         else sqlite3_bind_null(stmt, idx++);
         sqlite3_bind_double(stmt, idx++, latency_ms);
+        if (ttft_seconds) sqlite3_bind_double(stmt, idx++, *ttft_seconds);
+        else sqlite3_bind_null(stmt, idx++);
         if (tokens_per_second) sqlite3_bind_double(stmt, idx++, *tokens_per_second);
         else sqlite3_bind_null(stmt, idx++);
         sqlite3_bind_text(stmt, idx++, backend.c_str(), -1, SQLITE_TRANSIENT);
@@ -484,7 +513,7 @@ HistoryQueryResult TelemetryHistoryStore::query(const HistoryQueryFilters& filte
         {
             std::string select_sql =
                 "SELECT id, request_id, timestamp_ms, model_name, route, route_decision, "
-                "prompt_tokens, completion_tokens, latency_ms, tokens_per_second, backend, "
+                "prompt_tokens, completion_tokens, latency_ms, ttft_seconds, tokens_per_second, backend, "
                 "device, success, error, preview FROM telemetry_history" + where +
                 " ORDER BY timestamp_ms DESC, id DESC LIMIT ? OFFSET ?;";
             std::vector<BindParam> select_params = params;
@@ -512,6 +541,8 @@ HistoryQueryResult TelemetryHistoryStore::query(const HistoryQueryFilters& filte
                     rec.completion_tokens = sqlite3_column_type(stmt, col) == SQLITE_NULL ? -1 : sqlite3_column_int(stmt, col);
                     col++;
                     rec.latency_ms = sqlite3_column_type(stmt, col) == SQLITE_NULL ? -1.0 : sqlite3_column_double(stmt, col);
+                    col++;
+                    rec.ttft_seconds = sqlite3_column_type(stmt, col) == SQLITE_NULL ? -1.0 : sqlite3_column_double(stmt, col);
                     col++;
                     rec.tokens_per_second = sqlite3_column_type(stmt, col) == SQLITE_NULL ? -1.0 : sqlite3_column_double(stmt, col);
                     col++;

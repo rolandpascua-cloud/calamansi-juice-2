@@ -59,6 +59,7 @@ struct HistoryRecord {
     int prompt_tokens = -1;
     int completion_tokens = -1;
     double latency_ms = -1.0;
+    double ttft_seconds = -1.0;
     double tokens_per_second = -1.0;
     std::string backend;
     std::string device;

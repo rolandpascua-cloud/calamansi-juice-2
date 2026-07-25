@@ -17,6 +17,7 @@ interface HistoryRecord {
   prompt_tokens: number | null;
   completion_tokens: number | null;
   latency_ms: number | null;
+  ttft_seconds: number | null;
   tokens_per_second: number | null;
   backend: string;
   device: string;
@@ -38,7 +39,7 @@ interface SummaryResponse {
   overall: { total_requests: number; total_errors: number; error_rate: number };
 }
 
-type SortKey = 'timestamp_ms' | 'model_name' | 'route' | 'tokens_per_second' | 'latency_ms' | 'success';
+type SortKey = 'timestamp_ms' | 'model_name' | 'tokens_per_second';
 type SortDir = 'asc' | 'desc';
 
 const PAGE_SIZE = 50;
@@ -65,6 +66,7 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ searchQuery }) => {
   const [summary, setSummary] = useState<SummaryResponse | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const { confirm, ConfirmDialog: ClearConfirmDialog } = useConfirmDialog();
 
@@ -200,8 +202,94 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ searchQuery }) => {
     }
   };
 
+  const csvEscape = (value: string | number | boolean | null) => {
+    const s = value == null ? '' : String(value);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const handleDownload = async () => {
+    setDownloading(true);
+    setError(null);
+    try {
+      // Full history, not just the currently-loaded page — same route/backend
+      // filters as the table, but ignores the client-side-only status/search
+      // filters so the export is a complete record, not a narrowed view.
+      const DOWNLOAD_PAGE_SIZE = 500;
+      const all: HistoryRecord[] = [];
+      let downloadOffset = 0;
+      for (;;) {
+        const params = new URLSearchParams();
+        params.set('limit', String(DOWNLOAD_PAGE_SIZE));
+        params.set('offset', String(downloadOffset));
+        if (routeFilter !== 'all') params.set('route', routeFilter);
+        if (backendFilter !== 'all') params.set('backend', backendFilter);
+        const response = await serverFetch(`/telemetry/history?${params.toString()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data: HistoryResponse = await response.json();
+        const page = Array.isArray(data.records) ? data.records : [];
+        all.push(...page);
+        downloadOffset += DOWNLOAD_PAGE_SIZE;
+        if (page.length < DOWNLOAD_PAGE_SIZE || downloadOffset >= data.total) break;
+      }
+
+      const header = [
+        'timestamp', 'model', 'route', 'route_decision', 'backend', 'device',
+        'input_tokens', 'output_tokens', 'ttft_seconds', 'tokens_per_second',
+        'latency_ms', 'status', 'error', 'preview',
+      ];
+      const rows = all.map((r) => [
+        new Date(r.timestamp_ms).toISOString(),
+        r.model_name,
+        r.route,
+        r.route_decision ?? '',
+        r.backend,
+        r.device,
+        r.prompt_tokens ?? '',
+        r.completion_tokens ?? '',
+        r.ttft_seconds ?? '',
+        r.tokens_per_second ?? '',
+        r.latency_ms ?? '',
+        r.success ? 'ok' : 'error',
+        r.error,
+        r.preview,
+      ]);
+      const csv = [header, ...rows].map((row) => row.map(csvEscape).join(',')).join('\n');
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `calamansi-history-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to download history');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const formatTime = (ms: number) => new Date(ms).toLocaleString();
   const formatNum = (n: number | null, digits = 1) => (n == null ? '—' : n.toFixed(digits));
+
+  // The table only has room for Time/Model/Tokens-per-second in the left
+  // panel's fixed width; the rest of each record is available on hover
+  // (and in full via Download History) rather than as its own column.
+  const rowTooltip = (r: HistoryRecord) => {
+    const lines = [
+      `Route: ${r.route || '—'}`,
+      `Backend: ${r.backend || '—'}`,
+      `Device: ${r.device || '—'}`,
+      `Input tokens: ${r.prompt_tokens ?? '—'}`,
+      `Output tokens: ${r.completion_tokens ?? '—'}`,
+      `TTFT: ${formatNum(r.ttft_seconds, 2)}s`,
+      `Latency: ${formatNum(r.latency_ms, 0)}ms`,
+      `Status: ${r.success ? 'OK' : `Error — ${r.error || 'unknown'}`}`,
+    ];
+    return lines.join('\n');
+  };
 
   return (
     <div className="history-panel">
@@ -245,6 +333,15 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ searchQuery }) => {
         )}
 
         <button
+          className="history-panel-download-btn"
+          onClick={handleDownload}
+          disabled={downloading || total === 0}
+          title="Download the full history (all columns) as a CSV file"
+        >
+          {downloading ? 'Downloading…' : 'Download History'}
+        </button>
+
+        <button
           className="history-panel-clear-btn"
           onClick={handleClear}
           disabled={clearing || total === 0}
@@ -275,27 +372,19 @@ const HistoryPanel: React.FC<HistoryPanelProps> = ({ searchQuery }) => {
                   <tr>
                     <th onClick={() => toggleSort('timestamp_ms')}>Time</th>
                     <th onClick={() => toggleSort('model_name')}>Model</th>
-                    <th onClick={() => toggleSort('route')}>Route</th>
                     <th onClick={() => toggleSort('tokens_per_second')}>Tokens/s</th>
-                    <th onClick={() => toggleSort('latency_ms')}>Latency (ms)</th>
-                    <th onClick={() => toggleSort('success')}>Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {visibleRecords.map((r) => (
-                    <tr key={r.id} className={r.success ? '' : 'history-panel-row-error'}>
+                    <tr
+                      key={r.id}
+                      className={r.success ? '' : 'history-panel-row-error'}
+                      title={rowTooltip(r)}
+                    >
                       <td>{formatTime(r.timestamp_ms)}</td>
-                      <td title={r.model_name}>{r.model_name || '—'}</td>
-                      <td>{r.route || '—'}</td>
+                      <td>{r.model_name || '—'}</td>
                       <td>{formatNum(r.tokens_per_second)}</td>
-                      <td>{formatNum(r.latency_ms, 0)}</td>
-                      <td>
-                        {r.success ? (
-                          <span className="history-panel-status-ok">OK</span>
-                        ) : (
-                          <span className="history-panel-status-error" title={r.error}>Error</span>
-                        )}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
