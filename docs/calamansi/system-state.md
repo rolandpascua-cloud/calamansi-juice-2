@@ -22,7 +22,7 @@ Top-level sections, each independently collected so one failing collector never 
 - **`os_kernel`**: `distro` (from `/etc/os-release`), `kernel_version` (from `/proc/version`), `boot_mode` (systemd-boot/BLS vs GRUB, detected from `/boot/loader/entries` / `/boot/grub` rather than assumed — this varies distro to distro), `amd_iommu` (cmdline state; flagged if `off`, since that disables the NPU).
 - **`firmware`**: `bios` (version + release date via `dmidecode -t bios`, labeled `"unavailable - requires root"` when permission is denied rather than erroring), `gpu_vbios` (via `amd-smi static -I` / `rocm-smi --showvbios`, whichever is installed).
 - **`ai_stack`**: `rocm_version`, `hip_version`, `mesa_version`, `python_version`, `backends` (best-effort installed versions for `llamacpp`, `vllm`, `fastflowlm`, `openmoss`, `trellis` — reused from the existing recipe/backend version-tracking already computed for `/system-info`), and `app_version` (this app's own version plus the upstream Lemonade version it tracks, parsed from the `<upstream>+cj<fork>` version string).
-- **`driver_stack`**: best-effort presence checks for `asusctl`, `supergfxctl`, `z13ctl` (Strix Halo Z13-specific tooling) — never a hard dependency for this feature.
+- **`driver_stack`**: best-effort presence checks for `asusctl`, `supergfxctl`, `z13ctl` (Strix Halo Z13-specific tooling) and `tuned-adm` — never a hard dependency for this feature. `z13ctl` additionally carries a `status` field with the raw `z13ctl status` output (fan speed/mode, TDP limits, power profile, battery charge limit), and `tuned-adm` carries `active_profile` with the currently-active TuneD profile name (parsed from `tuned-adm active`).
 
 Example (abbreviated):
 

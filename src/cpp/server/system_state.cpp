@@ -556,9 +556,47 @@ json snapshot_driver_stack() {
     // Strix Halo Z13-specific, best-effort - presence only, never a hard
     // dependency for this feature.
     json section;
-    for (const char* tool : {"asusctl", "supergfxctl", "z13ctl"}) {
+    for (const char* tool : {"asusctl", "supergfxctl"}) {
         section[tool] = json{{"installed", is_tool_installed(tool)}};
     }
+
+    // z13ctl: presence plus its own status readout (fan/TDP/profile/battery
+    // limit) - that status is the actually useful part of checking for this
+    // tool, not just whether the binary exists.
+    bool z13ctl_installed = is_tool_installed("z13ctl");
+    json z13ctl_entry = json{{"installed", z13ctl_installed}};
+    if (z13ctl_installed) {
+        auto out = run_tool("z13ctl status 2>&1", 3);
+        z13ctl_entry["status"] = out ? available(trim(*out)) : unavailable("z13ctl status failed");
+    } else {
+        z13ctl_entry["status"] = unavailable("z13ctl not installed");
+    }
+    section["z13ctl"] = z13ctl_entry;
+
+    // tuned-adm isn't Z13-specific, but its active profile answers the same
+    // "what performance/power tuning is actually in effect" question this
+    // section exists for.
+    bool tuned_adm_installed = is_tool_installed("tuned-adm");
+    json tuned_adm_entry = json{{"installed", tuned_adm_installed}};
+    if (tuned_adm_installed) {
+        auto out = run_tool("tuned-adm active 2>&1", 3);
+        std::string profile;
+        if (out) {
+            const std::string prefix = "Current active profile:";
+            auto pos = out->find(prefix);
+            if (pos != std::string::npos) {
+                std::string rest = out->substr(pos + prefix.size());
+                auto nl = rest.find('\n');
+                profile = trim(nl == std::string::npos ? rest : rest.substr(0, nl));
+            }
+        }
+        tuned_adm_entry["active_profile"] =
+            profile.empty() ? unavailable("tuned-adm active returned no parseable profile") : available(profile);
+    } else {
+        tuned_adm_entry["active_profile"] = unavailable("tuned-adm not installed");
+    }
+    section["tuned_adm"] = tuned_adm_entry;
+
     return section;
 }
 

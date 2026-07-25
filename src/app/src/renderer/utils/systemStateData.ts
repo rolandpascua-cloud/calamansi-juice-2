@@ -40,7 +40,7 @@ export interface SystemStateSnapshot {
     backends: Record<string, Field>;
     app_version: { full_version: string; calamansi_version: string | null; tracks_upstream_lemonade: string };
   };
-  driver_stack: Record<string, { installed: boolean }>;
+  driver_stack: Record<string, { installed: boolean; status?: Field; active_profile?: Field }>;
 }
 
 export async function fetchSystemState(refresh = false): Promise<SystemStateSnapshot> {

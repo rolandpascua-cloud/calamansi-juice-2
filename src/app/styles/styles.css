@@ -2685,6 +2685,19 @@ footer {
     text-decoration: underline dotted;
 }
 
+.system-state-driver-detail {
+    white-space: pre-wrap;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.65rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    background: var(--bg-alpha-03);
+    border-radius: 4px;
+    padding: 6px 8px;
+    margin: 2px 0 6px;
+    text-align: left;
+}
+
 /* Calamansi Juice 2 addition: Resource Dashboard (ResourcesPanel.tsx). */
 
 .resources-panel {

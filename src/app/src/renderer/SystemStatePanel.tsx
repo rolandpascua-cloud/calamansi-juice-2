@@ -211,12 +211,27 @@ const SystemStatePanel: React.FC<SystemStatePanelProps> = () => {
 
       <Card id="driver_stack" title="Driver Stack (Strix Halo Z13)" expanded={expanded.has('driver_stack')} onToggle={toggle}>
         {Object.entries(driver_stack).map(([name, info]) => (
-          <div className="system-state-row" key={name}>
-            <span className="system-state-row-label">{name}</span>
-            <span className={`system-state-row-value ${info.installed ? '' : 'unavailable'}`}>
-              {info.installed ? 'Installed' : 'Not installed'}
-            </span>
-          </div>
+          <React.Fragment key={name}>
+            <div className="system-state-row">
+              <span className="system-state-row-label">{name}</span>
+              <span className={`system-state-row-value ${info.installed ? '' : 'unavailable'}`}>
+                {info.installed ? 'Installed' : 'Not installed'}
+              </span>
+            </div>
+            {info.active_profile && <FieldRow label={`${name} active profile`} field={info.active_profile} />}
+            {info.status && (
+              info.status.available ? (
+                <pre className="system-state-driver-detail">{String(info.status.value ?? '')}</pre>
+              ) : (
+                <div className="system-state-row">
+                  <span className="system-state-row-label">{name} status</span>
+                  <span className="system-state-row-value unavailable" title={info.status.reason || 'Unavailable'}>
+                    Unavailable
+                  </span>
+                </div>
+              )
+            )}
+          </React.Fragment>
         ))}
       </Card>
     </div>

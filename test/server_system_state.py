@@ -159,10 +159,19 @@ class SystemStateTests(unittest.TestCase):
 
     def test_006_driver_stack_section_well_formed(self):
         driver_stack = self.get_state()["driver_stack"]
-        for tool in ("asusctl", "supergfxctl", "z13ctl"):
+        for tool in ("asusctl", "supergfxctl", "z13ctl", "tuned_adm"):
             self.assertIn(tool, driver_stack)
             self.assertIn("installed", driver_stack[tool])
             self.assertIsInstance(driver_stack[tool]["installed"], bool)
+
+        # z13ctl and tuned-adm carry an extra Field-shaped leaf beyond plain
+        # presence (raw `z13ctl status` output / the active TuneD profile) -
+        # each degrades to {available: false, reason: "..."} independently
+        # of "installed" if the tool exists but the command itself fails.
+        assert_field_shape(self, driver_stack["z13ctl"]["status"], "driver_stack.z13ctl.status")
+        assert_field_shape(
+            self, driver_stack["tuned_adm"]["active_profile"], "driver_stack.tuned_adm.active_profile"
+        )
 
     def test_007_caching_and_refresh_bypass(self):
         first = self.get_state()
