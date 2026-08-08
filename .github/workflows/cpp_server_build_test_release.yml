@@ -164,7 +164,7 @@ jobs:
           @(
               "build\Release\lemond.exe",
               "build\Release\LemonadeServer.exe",
-              "build\app\lemonade-app.exe",
+              "build\app\calamansi-app.exe",
               "build\resources\web-app\index.html",
               "calamansi-juice-server-minimal.msi",
               "calamansi-juice-server-full.msi"
@@ -1635,12 +1635,12 @@ jobs:
 
           # Verify tray is NOT in the server RPM
           echo "Verifying server-only RPM content..."
-          if rpm -qpl "$RPM_FILE" | grep -Fxq "/opt/bin/lemonade-tray"; then
-              echo "ERROR: lemonade-tray binary found in server RPM"
+          if rpm -qpl "$RPM_FILE" | grep -Fxq -e "/opt/bin/calamansi-tray" -e "/opt/bin/lemonade-tray"; then
+              echo "ERROR: calamansi-tray binary found in server RPM"
               exit 1
           fi
-          if rpm -qpl "$RPM_FILE" | grep -Fxq "/usr/bin/lemonade-tray"; then
-              echo "ERROR: lemonade-tray symlink found in server RPM"
+          if rpm -qpl "$RPM_FILE" | grep -Fxq -e "/usr/bin/calamansi-tray" -e "/usr/bin/lemonade-tray"; then
+              echo "ERROR: calamansi-tray symlink found in server RPM"
               exit 1
           fi
 
@@ -1712,13 +1712,13 @@ jobs:
           if [ -d "$DIR/resources/web-app" ]; then
             echo "ERROR: Found web-app directory in archive"; FORBIDDEN=1
           fi
-          if ls "$DIR"/lemonade-app* 2>/dev/null; then
+          if ls "$DIR"/calamansi-app* "$DIR"/lemonade-app* 2>/dev/null; then
             echo "ERROR: Found desktop app in archive"; FORBIDDEN=1
           fi
-          if ls "$DIR"/lemonade-tray* 2>/dev/null; then
+          if ls "$DIR"/calamansi-tray* "$DIR"/lemonade-tray* 2>/dev/null; then
             echo "ERROR: Found tray app in archive"; FORBIDDEN=1
           fi
-          if ls "$DIR"/LemonadeServer* 2>/dev/null; then
+          if ls "$DIR"/CalamansiServer* "$DIR"/LemonadeServer* 2>/dev/null; then
             echo "ERROR: Found LemonadeServer in archive"; FORBIDDEN=1
           fi
           if [ "$FORBIDDEN" -ne 0 ]; then exit 1; fi
@@ -1812,8 +1812,11 @@ jobs:
 
           # Verify NO forbidden files
           $forbidden = @(
+              "$archiveDir\CalamansiServer.exe",
               "$archiveDir\LemonadeServer.exe",
+              "$archiveDir\calamansi-app.exe",
               "$archiveDir\lemonade-app.exe",
+              "$archiveDir\calamansi-tray.exe",
               "$archiveDir\lemonade-tray.exe",
               "$archiveDir\resources\web-app"
           )
