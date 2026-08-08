@@ -48,7 +48,7 @@ jobs:
         run: cmake --preset default -DBUILD_WEB_APP=OFF
 
       - name: Build server binaries
-        run: cmake --build --preset default --target lemond lemonade
+        run: cmake --build --preset default --target calamansid calamansi
 
       - name: Install Python test dependencies
         shell: bash

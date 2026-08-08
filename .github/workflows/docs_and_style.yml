@@ -51,7 +51,7 @@ jobs:
       - name: Configure and install build dependencies
         run: ./setup.sh
       - name: Build lemond
-        run: cmake --build --preset default --target lemond
+        run: cmake --build --preset default --target calamansid
       - name: Check backend reference docs are up to date
         run: python3 docs/tools/gen_backend_boilerplate.py --check
 

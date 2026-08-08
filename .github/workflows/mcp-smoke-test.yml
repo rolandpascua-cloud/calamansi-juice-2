@@ -73,7 +73,7 @@ jobs:
 
       - name: Build lemond
         run: |
-          cmake --build --preset default --target lemond
+          cmake --build --preset default --target calamansid
 
       - name: Verify lemond binary
         run: |

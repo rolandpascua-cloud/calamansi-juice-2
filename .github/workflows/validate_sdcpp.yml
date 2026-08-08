@@ -228,7 +228,7 @@ jobs:
           if (Test-Path "build") { Remove-Item -Recurse -Force "build" }
           cmake --preset vs18
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          cmake --build build --config Release --target lemond lemonade
+          cmake --build build --config Release --target calamansid calamansi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path "build\Release\lemond.exe")) {
               Write-Host "ERROR: lemond.exe not found!" -ForegroundColor Red

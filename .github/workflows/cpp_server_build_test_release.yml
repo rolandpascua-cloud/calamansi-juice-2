@@ -964,7 +964,7 @@ jobs:
         run: |
           set -e
           cmake --preset default -DBUILD_WEB_APP=OFF
-          cmake --build --preset default --target lemond lemonade
+          cmake --build --preset default --target calamansid calamansi
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v7
