@@ -24,6 +24,18 @@ runs:
         VERSION=$(git describe --tags --always)
         # Strip leading 'v' for Debian version compatibility
         DEB_VERSION=$(echo "${VERSION}" | sed 's/^v//')
+
+        if ! [[ "$DEB_VERSION" =~ ^[0-9] ]]; then
+          # No git tag reachable from HEAD: git describe fell back to a bare
+          # commit hash, which dpkg-buildpackage rejects (Debian upstream
+          # versions must start with a digit). Fall back to this fork's own
+          # version scheme instead of requiring a tag to exist.
+          BASE_VERSION=$(grep -oP 'project\(lemon_cpp VERSION \K[0-9]+\.[0-9]+\.[0-9]+' CMakeLists.txt)
+          CJ_SUFFIX=$(grep -oP 'LEMON_FULL_VERSION_STRING "\$\{PROJECT_VERSION\}\K[^"]*' CMakeLists.txt)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DEB_VERSION="${BASE_VERSION}${CJ_SUFFIX}+git${SHORT_SHA}"
+        fi
+
         echo "version=${DEB_VERSION}" >> $GITHUB_OUTPUT
 
     - name: Create Debian packaging metadata
